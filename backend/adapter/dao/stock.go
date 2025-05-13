@@ -16,7 +16,7 @@ func NewStockDao(gdb *gorm.DB) *StockDao {
 
 func (s StockDao) AliveStocks() (*[]model.StockInfo, error) {
 	var stocks []model.StockInfo
-	err := s.ormer.Where("status = ?", 0).Find(&stocks).Error
+	err := s.ormer.Where("status = ?", 0).Order("market").Find(&stocks).Error
 	return &stocks, WrapGormError(err)
 }
 
@@ -88,6 +88,6 @@ func (s StockDao) DeleteTransaction(id int64) error {
 
 func (s StockDao) GetTransactions(investId int64) (*[]model.Transaction, error) {
 	var transactions []model.Transaction
-	err := s.ormer.Where("invest_id = ?", investId).Find(&transactions).Error
+	err := s.ormer.Where("invest_id = ?", investId).Order("finish_time").Find(&transactions).Error
 	return &transactions, WrapGormError(err)
 }

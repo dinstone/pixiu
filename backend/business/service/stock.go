@@ -205,7 +205,13 @@ func (ss StockService) computeHolding(investId int64) error {
 	ouAmount := decimal.NewFromFloat(0)
 	totalTaxFee := decimal.NewFromFloat(0)
 
+	first := true
 	for _, t := range *trans {
+		if first {
+			invest.OpenTime = t.FinishTime
+			first = false
+		}
+
 		if t.Action == 1 {
 			inQuantity += t.Quantity
 			inAmount = inAmount.Add(decimal.NewFromFloat(t.Price).Mul(decimal.NewFromInt(int64(t.Quantity))))

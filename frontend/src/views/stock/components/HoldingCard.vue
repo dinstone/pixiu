@@ -194,8 +194,9 @@ function handleDeleteBtn(id) {
         d.loading = true
         await api.deleteTrade(id)
         $message.success('删除成功')
-        // tradeRef.value.handleSearch()
         d.loading = false
+
+        await initHolding()
       }
       catch (error) {
         console.error(error)
