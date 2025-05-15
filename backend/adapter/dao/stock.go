@@ -55,7 +55,7 @@ func (s StockDao) CreateInvestment(invest *model.Investment) error {
 }
 
 func (s StockDao) UpdateInvestment(invest *model.Investment) error {
-	return WrapGormError(s.ormer.Model(invest).Select("ProfitLoss", "TotalTaxFee", "CostPrice", "Quantity", "Amount", "CloseTime", "Status").Updates(invest).Error)
+	return WrapGormError(s.ormer.Model(invest).Select("ProfitLoss", "TotalTaxFee", "CostPrice", "Quantity", "Amount", "OpenTime", "CloseTime", "Status").Updates(invest).Error)
 }
 
 func (s StockDao) GetInvestment(id int64) (*model.Investment, error) {

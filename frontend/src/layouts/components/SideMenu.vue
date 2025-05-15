@@ -44,7 +44,7 @@ function handleMenuSelect(key, item) {
       type: 'info',
       title: `请选择打开方式`,
       positiveText: '外链打开',
-      negativeText: '在本站内嵌打开',
+      negativeText: '站内打开',
       confirm() {
         window.open(item.originPath)
       },
@@ -62,7 +62,7 @@ function handleMenuSelect(key, item) {
 </script>
 
 <style>
-.side-menu:not(.n-menu--collapsed) {
+.side-menu {
   .n-menu-item-content {
     &::before {
       left: 8px;

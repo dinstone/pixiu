@@ -6,11 +6,11 @@
           持仓情况
         </h3>
       </div>
-      <n-descriptions label-placement="left" bordered :column="2">
-        <n-descriptions-item label="股票">
+      <n-descriptions label-placement="left" bordered :column="3">
+        <n-descriptions-item label="股票" :span="2">
           {{ currentStock.market }}  {{ currentStock.name }} ({{ currentStock.code }})
         </n-descriptions-item>
-        <n-descriptions-item label="币种">
+        <n-descriptions-item label="币种" :span="1">
           {{ currentStock.currency }}
         </n-descriptions-item>
         <n-descriptions-item label="持仓盈亏">
@@ -19,17 +19,17 @@
         <n-descriptions-item label="税费合计">
           {{ holding.totalTaxFee }}
         </n-descriptions-item>
+        <n-descriptions-item label="持股天数">
+          {{ holding.holdingDays }}
+        </n-descriptions-item>
+        <n-descriptions-item label="持仓金额">
+          {{ holding.amount }}
+        </n-descriptions-item>
         <n-descriptions-item label="买入成本">
           {{ holding.costPrice }}
         </n-descriptions-item>
         <n-descriptions-item label="持仓数量">
           {{ holding.quantity }}
-        </n-descriptions-item>
-        <n-descriptions-item label="持仓金额">
-          {{ holding.amount }}
-        </n-descriptions-item>
-        <n-descriptions-item label="持股天数">
-          {{ holding.holdingDays }}
         </n-descriptions-item>
       </n-descriptions>
 
@@ -95,7 +95,7 @@ const tradeColumns = [
   {
     title: '操作',
     key: 'actions',
-    width: 320,
+    width: 200,
     align: 'center',
     fixed: 'right',
     render(row) {
