@@ -2,7 +2,7 @@ import api from '@/api'
 import { basePermissions } from '@/settings'
 
 export async function getUserInfo() {
-  const res = await api.getUser()
+  const res = await api.getUserDetail()
   const { id, username, profile, roles, currentRole } = res.data || {}
   return {
     id,

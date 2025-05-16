@@ -69,9 +69,9 @@
 
         <n-checkbox
           class="mt-20"
-          :checked="isRemember"
+          :checked="rememberRef"
           label="记住我"
-          :on-update:checked="(val) => (isRemember = val)"
+          :on-update:checked="(val) => (rememberRef = val)"
         />
 
         <div class="mt-20 flex items-center">
@@ -102,7 +102,7 @@
 
 <script setup>
 import { useAuthStore } from '@/store'
-import { lStorage, throttle } from '@/utils'
+import { throttle } from '@/utils'
 import { useStorage } from '@vueuse/core'
 import api from './api'
 
@@ -111,21 +111,15 @@ const router = useRouter()
 const route = useRoute()
 const title = import.meta.env.VITE_TITLE
 
-const loginInfo = ref({
-  username: '',
-  password: '',
-})
+const rememberRef = useStorage('isRemember', true)
+const usernameRef = useStorage('username')
+
+const loginInfo = ref({ username: usernameRef.value, password: '' })
 
 const captchaUrl = ref('')
 const initCaptcha = throttle(() => {
   captchaUrl.value = `${import.meta.env.VITE_AXIOS_BASE_URL}/auth/captcha?${Date.now()}`
 }, 500)
-
-const localLoginInfo = lStorage.get('loginInfo')
-if (localLoginInfo) {
-  loginInfo.value.username = localLoginInfo.username || ''
-  loginInfo.value.password = localLoginInfo.password || ''
-}
 initCaptcha()
 
 function quickLogin() {
@@ -134,7 +128,6 @@ function quickLogin() {
   handleLogin(true)
 }
 
-const isRemember = useStorage('isRemember', true)
 const loading = ref(false)
 async function handleLogin(isQuick) {
   const { username, password, captcha } = loginInfo.value
@@ -146,11 +139,11 @@ async function handleLogin(isQuick) {
     loading.value = true
     $message.loading('正在验证，请稍后...', { key: 'login' })
     const { data } = await api.login({ username, password: password.toString(), captcha, isQuick })
-    if (isRemember.value) {
-      lStorage.set('loginInfo', { username, password })
+    if (rememberRef.value) {
+      usernameRef.value = username
     }
     else {
-      lStorage.remove('loginInfo')
+      usernameRef.value = ''
     }
     onLoginSuccess(data)
   }

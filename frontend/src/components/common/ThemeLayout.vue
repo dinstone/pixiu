@@ -11,10 +11,11 @@
             :on-update:value="(v) => setThemeColor(v)"
             :render-label="() => ''"
           />
+
           <i
             id="toggleTheme"
             class="mr-16 h-24 w-24 cursor-pointer"
-            :class="isDark ? 'i-fe:moon' : 'i-fe:sun'"
+            :class="appStore.isDark ? 'i-fe:moon' : 'i-fe:sun'"
             @click="toggleThemeDark"
           />
         </n-space>
@@ -108,12 +109,11 @@ import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { useAppStore } from '@/store'
 import { getPresetColors } from '@arco-design/color'
-import { useDark, useToggle } from '@vueuse/core'
+import { useToggle } from '@vueuse/core'
 import { UpdatePreferences } from 'wailsjs/go/ipc/PreferenceApi'
 
 const primaryColors = Object.entries(getPresetColors()).map(([, value]) => value.primary)
 const appStore = useAppStore()
-const isDark = useDark()
 function setThemeColor(v) {
   appStore.setPrimaryColor(v)
   UpdatePreferences({

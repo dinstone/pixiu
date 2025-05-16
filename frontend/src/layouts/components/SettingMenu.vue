@@ -7,7 +7,7 @@
  --------------------------------->
 
 <template>
-  <div class="f-c-c cursor-pointer rounded-4 p-6 text-20 transition-all-300 auto-bg-hover">
+  <div class="custom-bg-hover f-c-c cursor-pointer rounded-4 p-6 text-20 transition-all-300">
     <n-dropdown
       :options="staticMenus"
       trigger="click"
@@ -15,6 +15,7 @@
     >
       <i class="i-fe:settings cursor-pointer text-20" />
     </n-dropdown>
+
     <ThemeLayout ref="themeLayoutRef" />
     <AboutDialog ref="aboutDialogRef" />
   </div>
@@ -66,17 +67,3 @@ const staticMenus = [
   },
 ]
 </script>
-
-<style>
-.side-menu:not(.n-menu--collapsed) {
-  .n-menu-item-content {
-    &::before {
-      left: 8px;
-      right: 8px;
-    }
-    &.n-menu-item-content--selected::before {
-      border-left: 4px solid rgb(var(--primary-color));
-    }
-  }
-}
-</style>
