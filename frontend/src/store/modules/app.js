@@ -10,8 +10,10 @@ import { defaultLayout, defaultPrimaryColor, naiveThemeOverrides } from '@/setti
 import { generate, getRgbStr } from '@arco-design/color'
 import { useDark } from '@vueuse/core'
 import { get } from 'lodash'
+import { NButton, NSpace } from 'naive-ui'
 import { defineStore } from 'pinia'
 import { GetPreferences } from 'wailsjs/go/ipc/PreferenceApi'
+import { BrowserOpenURL } from 'wailsjs/runtime/runtime.js'
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -44,6 +46,78 @@ export const useAppStore = defineStore('app', {
         if (this.isDark !== dark) {
           this.isDark = dark
         }
+      }
+    },
+    async checkForUpdate(manual = false) {
+      if (manual) {
+        $message.loading('正在检索新版本', { key: 'checkUpdate', duration: 10000 })
+      }
+      try {
+        const { success, data = {} } = {
+          success: true,
+          data: {
+            version: 'v1.0.0',
+            latest: 'v1.2.0',
+            download_page: 'https://github.com/dinstone/pixiu',
+            description: '',
+          },
+        } // await CheckForUpdate()
+
+        if (success) {
+          const {
+            latest,
+            download_page,
+            description,
+          } = data
+
+          const downUrl = download_page || ''
+
+          if (manual) {
+            $message.success('检索到新版本', { key: 'checkUpdate' })
+          }
+
+          const notiRef = $notification.info({
+            title: `有可用新版本 - ${latest}`,
+            content: description || `新版本 ${latest}, 是否立即下载`,
+            action: () =>
+              h('div', { class: 'flex-box-h flex-item-expand' }, [
+                h(NSpace, { wrapItem: false }, () => [
+                  h(
+                    NButton,
+                    {
+                      size: 'small',
+                      secondary: true,
+                      onClick: notiRef.destroy,
+                    },
+                    () => '稍后下载',
+                  ),
+                  h(
+                    NButton,
+                    {
+                      type: 'primary',
+                      size: 'small',
+                      secondary: true,
+                      onClick: () => BrowserOpenURL(downUrl),
+                    },
+                    () => '立即下载',
+                  ),
+                ]),
+              ]),
+            onPositiveClick: () => BrowserOpenURL(downUrl),
+          })
+          return
+        }
+
+        if (manual) {
+          $message.info('当前已是最新版', { key: 'checkUpdate' })
+        }
+      }
+      finally {
+        nextTick().then(() => {
+          if (manual) {
+            $message.destroy('checkUpdate')
+          }
+        })
       }
     },
     switchCollapsed() {

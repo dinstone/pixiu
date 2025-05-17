@@ -23,12 +23,14 @@
 
 <script setup>
 import { AboutDialog, ThemeLayout } from '@/components'
+import { useAppStore } from '@/store'
 import { BrowserOpenURL } from 'wailsjs/runtime/runtime.js'
 
 const themeLayoutRef = ref(null)
 const aboutDialogRef = ref(null)
 
 const router = useRouter()
+const appStore = useAppStore()
 
 function handleMenuSelect(key, item) {
   if (key === 'theme') {
@@ -41,6 +43,10 @@ function handleMenuSelect(key, item) {
   }
   if (key === 'apiDoc') {
     BrowserOpenURL(item.path)
+    return
+  }
+  if (key === 'update') {
+    appStore.checkForUpdate(true)
     return
   }
   if (!item.path)
@@ -59,7 +65,17 @@ const staticMenus = [
   {
     label: '接口文档',
     key: 'apiDoc',
+    icon: () => h('i', { class: 'i-fe:book text-14' }),
     path: 'https://apifox.com/apidoc/shared-ff4a4d32-c0d1-4caf-b0ee-6abc130f734a',
+  },
+  {
+    label: '检查更新',
+    key: 'update',
+    icon: () => h('i', { class: 'i-fe:download text-14' }),
+  },
+  {
+    type: 'divider',
+    key: 'd1',
   },
   {
     label: '关于系统',
