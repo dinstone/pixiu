@@ -26,8 +26,8 @@ export const useAppStore = defineStore('app', {
   actions: {
     getDefaultTheme() {
       return {
+        dark: false,
         layout: defaultLayout,
-        dark: useDark(),
         color: defaultPrimaryColor,
       }
     },
@@ -72,9 +72,9 @@ export const useAppStore = defineStore('app', {
 
           const downUrl = download_page || ''
 
-          if (manual) {
-            $message.success('检索到新版本', { key: 'checkUpdate' })
-          }
+          // if (manual) {
+          //   $message.success('检索到新版本', { key: 'checkUpdate' })
+          // }
 
           const notiRef = $notification.info({
             title: `有可用新版本 - ${latest}`,

@@ -14,10 +14,14 @@
 
           <i
             id="toggleTheme"
-            class="mr-16 h-24 w-24 cursor-pointer"
+            class="h-24 w-24 cursor-pointer"
             :class="appStore.isDark ? 'i-fe:moon' : 'i-fe:sun'"
             @click="toggleThemeDark"
           />
+
+          <n-button @click="setDefaultTheme">
+            重置默认
+          </n-button>
         </n-space>
       </n-card>
       <n-card title="布局">
@@ -114,6 +118,18 @@ import { UpdatePreferences } from 'wailsjs/go/ipc/PreferenceApi'
 
 const primaryColors = Object.entries(getPresetColors()).map(([, value]) => value.primary)
 const appStore = useAppStore()
+
+function setDefaultTheme() {
+  const theme = appStore.getDefaultTheme()
+  appStore.isDark = theme.dark
+  appStore.setPrimaryColor(theme.color)
+
+  UpdatePreferences({
+    'theme.dark': appStore.isDark,
+    'theme.color': appStore.primaryColor,
+  })
+}
+
 function setThemeColor(v) {
   appStore.setPrimaryColor(v)
   UpdatePreferences({
