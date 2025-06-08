@@ -15,13 +15,13 @@ func NewPreferenceApi(app *container.App) *PreferenceApi {
 }
 
 func (p *PreferenceApi) GetPreferences() (ret Result) {
-	ps := p.app.Service("PreferenceService").(*service.PreferenceService)
+	ps := getPreferenceService(p.app)
 	ret.Data = ps.GetPreferences()
 	return
 }
 
 func (p *PreferenceApi) SetPreferences(pf *model.Preferences) (ret Result) {
-	ps := p.app.Service("PreferenceService").(*service.PreferenceService)
+	ps := getPreferenceService(p.app)
 	if err := ps.SetPreferences(pf); err != nil {
 		ret.Code = 500
 		ret.Mesg = err.Error()
@@ -30,10 +30,14 @@ func (p *PreferenceApi) SetPreferences(pf *model.Preferences) (ret Result) {
 }
 
 func (p *PreferenceApi) UpdatePreferences(values map[string]any) (ret Result) {
-	ps := p.app.Service("PreferenceService").(*service.PreferenceService)
+	ps := getPreferenceService(p.app)
 	if err := ps.UpdatePreferences(values); err != nil {
 		ret.Code = 500
 		ret.Mesg = err.Error()
 	}
 	return
+}
+
+func getPreferenceService(app *container.App) *service.PreferenceService {
+	return app.Service("PreferenceService").(*service.PreferenceService)
 }

@@ -18,7 +18,7 @@ func NewStockApi(app *container.App) *StockApi {
 }
 
 func (s *StockApi) GetStockList() (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	sis, err := ss.GetStockList()
 	if err != nil {
 		handleError(err, &result)
@@ -29,7 +29,7 @@ func (s *StockApi) GetStockList() (result Result) {
 }
 
 func (s *StockApi) GetStock(code string) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	si, err := ss.GetStock(code)
 	if err != nil {
 		handleError(err, &result)
@@ -40,7 +40,7 @@ func (s *StockApi) GetStock(code string) (result Result) {
 }
 
 func (s *StockApi) AddStock(si *model.StockInfo) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	err := ss.SaveStock(si)
 	if err != nil {
 		handleError(err, &result)
@@ -50,7 +50,7 @@ func (s *StockApi) AddStock(si *model.StockInfo) (result Result) {
 }
 
 func (s *StockApi) UpdateStock(si *model.StockInfo) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	err := ss.UpdateStock(si)
 	if err != nil {
 		handleError(err, &result)
@@ -60,7 +60,7 @@ func (s *StockApi) UpdateStock(si *model.StockInfo) (result Result) {
 }
 
 func (s *StockApi) DeleteStock(code string) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	err := ss.DeleteStock(code)
 	if err != nil {
 		handleError(err, &result)
@@ -70,7 +70,7 @@ func (s *StockApi) DeleteStock(code string) (result Result) {
 }
 
 func (s *StockApi) GetHolding(code string) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	invest, err := ss.GetHolding(code)
 	if err != nil {
 		handleError(err, &result)
@@ -81,7 +81,7 @@ func (s *StockApi) GetHolding(code string) (result Result) {
 }
 
 func (s *StockApi) AddTransaction(tran *model.Transaction) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	err := ss.AddTransaction(tran)
 	if err != nil {
 		slf4g.Get().Warn("add transaction error: %v", err)
@@ -92,7 +92,7 @@ func (s *StockApi) AddTransaction(tran *model.Transaction) (result Result) {
 }
 
 func (s *StockApi) UpdateTransaction(tran *model.Transaction) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	err := ss.UpdateTransaction(tran)
 	if err != nil {
 		handleError(err, &result)
@@ -102,7 +102,7 @@ func (s *StockApi) UpdateTransaction(tran *model.Transaction) (result Result) {
 }
 
 func (s *StockApi) DeleteTransaction(tranId int64) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	err := ss.DeleteTransaction(tranId)
 	if err != nil {
 		handleError(err, &result)
@@ -112,7 +112,7 @@ func (s *StockApi) DeleteTransaction(tranId int64) (result Result) {
 }
 
 func (s *StockApi) GetTransactions(investId int64) (result Result) {
-	ss := getService(s.app)
+	ss := getStockService(s.app)
 	tranArray, err := ss.GetTransactions(investId)
 	if err != nil {
 		handleError(err, &result)
@@ -122,6 +122,6 @@ func (s *StockApi) GetTransactions(investId int64) (result Result) {
 	return
 }
 
-func getService(app *container.App) *service.StockService {
+func getStockService(app *container.App) *service.StockService {
 	return app.Service("StockService").(*service.StockService)
 }

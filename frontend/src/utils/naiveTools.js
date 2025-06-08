@@ -38,9 +38,9 @@ function setupMessage(NMessage) {
     }
 
     showMessage(type, content, option = {}) {
-      if (Array.isArray(content)) {
-        return content.forEach(msg => NMessage[type](msg, option))
-      }
+      // if (Array.isArray(content)) {
+      //   return content.forEach(msg => NMessage[type](msg, option))
+      // }
 
       if (!option.key) {
         return NMessage[type](content, option)
@@ -60,27 +60,29 @@ function setupMessage(NMessage) {
           },
         })
       }
+
       this.removeMessage(option.key, option.duration)
+      return this.messageMap[option.key]
     }
 
     loading(content, option) {
-      this.showMessage('loading', content, option)
+      return this.showMessage('loading', content, option)
     }
 
     success(content, option) {
-      this.showMessage('success', content, option)
+      return this.showMessage('success', content, option)
     }
 
     error(content, option) {
-      this.showMessage('error', content, option)
+      return this.showMessage('error', content, option)
     }
 
     info(content, option) {
-      this.showMessage('info', content, option)
+      return this.showMessage('info', content, option)
     }
 
     warning(content, option) {
-      this.showMessage('warning', content, option)
+      return this.showMessage('warning', content, option)
     }
   }
 
