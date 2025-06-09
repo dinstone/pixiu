@@ -4,6 +4,7 @@ import (
 	"pixiu/backend/business/model"
 	"pixiu/backend/business/repository"
 	"pixiu/backend/pkg/exception"
+	"pixiu/backend/pkg/gormer"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -12,22 +13,23 @@ import (
 const DateTimeLayout = "2006-01-02 15:04:05"
 
 type StockService struct {
-	sr repository.StockRepository
+	gtm gormer.GormTM
+	sr  repository.StockRepository
 }
 
-func NewStockService(sr repository.StockRepository) *StockService {
-	return &StockService{sr: sr}
+func NewStockService(gtm gormer.GormTM, sr repository.StockRepository) *StockService {
+	return &StockService{gtm, sr}
 }
 
 func (ss StockService) GetStockList() (*[]model.StockInfo, error) {
-	return ss.sr.AliveStocks()
+	return ss.sr.AliveStocks(ss.gtm.Context())
 }
 
 func (ss StockService) GetStock(code string) (*model.StockInfo, error) {
 	if code == "" {
 		return nil, exception.NewBusiness(400, "code is required")
 	}
-	return ss.sr.GetStock(code)
+	return ss.sr.GetStock(ss.gtm.Context(), code)
 }
 
 func (ss StockService) SaveStock(si *model.StockInfo) error {
@@ -44,7 +46,7 @@ func (ss StockService) SaveStock(si *model.StockInfo) error {
 	si.Status = 0
 	si.CreatedAt = time.Now()
 	si.UpdatedAt = time.Now()
-	return ss.sr.SaveStock(si)
+	return ss.sr.SaveStock(ss.gtm.Context(), si)
 }
 
 func (ss StockService) UpdateStock(si *model.StockInfo) error {
@@ -55,7 +57,7 @@ func (ss StockService) UpdateStock(si *model.StockInfo) error {
 		return exception.NewBusiness(400, "name is required")
 	}
 
-	osi, err := ss.sr.GetStock(si.Code)
+	osi, err := ss.sr.GetStock(ss.gtm.Context(), si.Code)
 	if err != nil {
 		return err
 	}
@@ -66,14 +68,14 @@ func (ss StockService) UpdateStock(si *model.StockInfo) error {
 	osi.Name = si.Name
 	osi.Status = 0
 
-	return ss.sr.UpdateStock(osi)
+	return ss.sr.UpdateStock(ss.gtm.Context(), osi)
 }
 
 func (ss StockService) DeleteStock(code string) error {
 	if code == "" {
 		return exception.NewBusiness(400, "code is required")
 	}
-	return ss.sr.DeleteStock(code)
+	return ss.sr.DeleteStock(ss.gtm.Context(), code)
 }
 
 func (ss StockService) GetHolding(code string) (*model.Investment, error) {
@@ -81,7 +83,7 @@ func (ss StockService) GetHolding(code string) (*model.Investment, error) {
 		return nil, exception.NewBusiness(400, "code is required")
 	}
 
-	invest, err := ss.sr.GetHolding(code)
+	invest, err := ss.sr.GetHolding(ss.gtm.Context(), code)
 	if err != nil {
 		return nil, err
 	}
@@ -99,11 +101,11 @@ func (ss StockService) GetHolding(code string) (*model.Investment, error) {
 }
 
 func (ss StockService) DeleteTransaction(tranId int64) error {
-	tran, err := ss.sr.GetTransaction(tranId)
+	tran, err := ss.sr.GetTransaction(ss.gtm.Context(), tranId)
 	if err != nil {
 		return exception.WrapService(500, "dao error", err)
 	}
-	err = ss.sr.DeleteTransaction(tranId)
+	err = ss.sr.DeleteTransaction(ss.gtm.Context(), tranId)
 	if err != nil {
 		return exception.WrapService(500, "dao error", err)
 	}
@@ -114,7 +116,7 @@ func (ss StockService) UpdateTransaction(tran *model.Transaction) error {
 	if tran.ID == 0 {
 		return exception.NewService(400, "transaction id is required")
 	}
-	otran, err := ss.sr.GetTransaction(tran.ID)
+	otran, err := ss.sr.GetTransaction(ss.gtm.Context(), tran.ID)
 	if err != nil {
 		return exception.WrapService(500, "dao error", err)
 	}
@@ -129,7 +131,7 @@ func (ss StockService) UpdateTransaction(tran *model.Transaction) error {
 	otran.Amount = floatMul(tran.Price, tran.Quantity)
 	otran.FinishTime = tran.FinishTime
 	otran.UpdatedAt = time.Now()
-	err = ss.sr.UpdateTransaction(otran)
+	err = ss.sr.UpdateTransaction(ss.gtm.Context(), otran)
 	if err != nil {
 		return exception.WrapService(500, "dao error", err)
 	}
@@ -154,7 +156,7 @@ func (ss StockService) AddTransaction(tran *model.Transaction) error {
 
 	nowTime := time.Now()
 
-	invest, err := ss.sr.GetHolding(tran.StockCode)
+	invest, err := ss.sr.GetHolding(ss.gtm.Context(), tran.StockCode)
 	if err != nil {
 		// no holding investment
 		if tran.Action == -1 {
@@ -163,7 +165,7 @@ func (ss StockService) AddTransaction(tran *model.Transaction) error {
 		// add holding investment for opening
 		invest = &model.Investment{StockCode: tran.StockCode, Status: 0,
 			CreatedAt: nowTime, UpdatedAt: nowTime, OpenTime: nowTime.Format(DateTimeLayout)}
-		err := ss.sr.CreateInvestment(invest)
+		err := ss.sr.CreateInvestment(ss.gtm.Context(), invest)
 		if err != nil {
 			return exception.WrapService(500, "create holding error", err)
 		}
@@ -178,7 +180,7 @@ func (ss StockService) AddTransaction(tran *model.Transaction) error {
 	tran.UpdatedAt = nowTime
 	tran.Amount = floatMul(tran.Price, tran.Quantity)
 
-	err = ss.sr.CreateTransaction(tran)
+	err = ss.sr.CreateTransaction(ss.gtm.Context(), tran)
 	if err != nil {
 		return err
 	}
@@ -188,12 +190,12 @@ func (ss StockService) AddTransaction(tran *model.Transaction) error {
 }
 
 func (ss StockService) computeHolding(investId int64) error {
-	invest, err := ss.sr.GetInvestment(investId)
+	invest, err := ss.sr.GetInvestment(ss.gtm.Context(), investId)
 	if err != nil {
 		return exception.WrapService(500, "dao error", err)
 	}
 
-	trans, err := ss.sr.GetTransactions(investId)
+	trans, err := ss.sr.GetTransactions(ss.gtm.Context(), investId)
 	if err != nil {
 		return exception.WrapService(500, "dao error", err)
 	}
@@ -241,7 +243,7 @@ func (ss StockService) computeHolding(investId int64) error {
 
 	invest.UpdatedAt = time.Now()
 
-	err = ss.sr.UpdateInvestment(invest)
+	err = ss.sr.UpdateInvestment(ss.gtm.Context(), invest)
 	if err != nil {
 		return exception.WrapService(500, "update invest error", err)
 	}
@@ -250,7 +252,7 @@ func (ss StockService) computeHolding(investId int64) error {
 }
 
 func (ss StockService) GetTransactions(investId int64) (*[]model.Transaction, error) {
-	trans, err := ss.sr.GetTransactions(investId)
+	trans, err := ss.sr.GetTransactions(ss.gtm.Context(), investId)
 	if err != nil {
 		return nil, exception.WrapService(500, "dao error", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"pixiu/backend/business/model"
 	"pixiu/backend/business/service"
 	"pixiu/backend/pkg/constant"
+	"pixiu/backend/pkg/gormer"
 	"pixiu/backend/pkg/slf4g"
 	"time"
 
@@ -82,7 +83,8 @@ func (a *App) Startup(ctx context.Context) {
 		logger.Info("数据库表创建成功")
 	}
 
-	ss := service.NewStockService(dao.NewStockDao(gdb))
+	gormer := gormer.NewGormer(gdb)
+	ss := service.NewStockService(gormer, dao.NewStockDao(gormer))
 	a.svs["StockService"] = ss
 
 	pls := storage.NewLocalStorage("preferences.yaml")
