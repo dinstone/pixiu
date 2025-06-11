@@ -21,6 +21,33 @@ func NewStockService(gtm gormer.GormTM, sr repository.StockRepository) *StockSer
 	return &StockService{gtm, sr}
 }
 
+func (ss *StockService) GetClearList(stime string, ftime string) (*[]model.ClearStats, error) {
+	return ss.sr.GetClearList(ss.gtm.Context(), stime, ftime)
+}
+
+func (ss *StockService) GetStockClear(stockCode string, startTime string, finishTime string) (*model.ClearInvest, error) {
+	if stockCode == "" {
+		return nil, exception.NewBusiness(400, "stock code is required")
+	}
+	sinfo, err := ss.sr.GetStock(ss.gtm.Context(), stockCode)
+	if err != nil {
+		return nil, err
+	}
+	cinvests, err := ss.sr.GetClearInvest(ss.gtm.Context(), stockCode, startTime, finishTime)
+	if err != nil {
+		return nil, err
+	}
+
+	var totalCount int
+	var profitLoss float64
+	for _, ci := range *cinvests {
+		totalCount++
+		profitLoss += ci.ProfitLoss
+	}
+
+	return &model.ClearInvest{sinfo, &model.ClearStats{TotalCount: totalCount, ProfitLoss: profitLoss, StartTime: startTime, FinishTime: finishTime}, cinvests}, nil
+}
+
 func (ss StockService) GetStockList() (*[]model.StockInfo, error) {
 	return ss.sr.AliveStocks(ss.gtm.Context())
 }
@@ -207,13 +234,7 @@ func (ss StockService) computeHolding(investId int64) error {
 	ouAmount := decimal.NewFromFloat(0)
 	totalTaxFee := decimal.NewFromFloat(0)
 
-	first := true
 	for _, t := range *trans {
-		if first {
-			invest.OpenTime = t.FinishTime
-			first = false
-		}
-
 		if t.Action == 1 {
 			inQuantity += t.Quantity
 			inAmount = inAmount.Add(decimal.NewFromFloat(t.Price).Mul(decimal.NewFromInt(int64(t.Quantity))))
@@ -224,21 +245,22 @@ func (ss StockService) computeHolding(investId int64) error {
 		totalTaxFee = totalTaxFee.Add(decimal.NewFromFloat(t.TaxFee))
 	}
 
-	invest.Quantity = inQuantity - ouQuantity
-
 	invest.TotalTaxFee = totalTaxFee.InexactFloat64()
-	if invest.Quantity == 0 {
-		invest.CostPrice = 0
-	} else {
-		invest.CostPrice = inAmount.Div(decimal.NewFromInt(int64(inQuantity))).RoundBank(3).InexactFloat64()
-	}
+	invest.CostPrice = inAmount.Div(decimal.NewFromInt(int64(inQuantity))).RoundBank(3).InexactFloat64()
+
+	invest.Quantity = inQuantity - ouQuantity
 	invest.Amount = floatMul(invest.CostPrice, invest.Quantity)
 	invest.ProfitLoss = ouAmount.Sub(inAmount).Add(decimal.NewFromFloat(invest.Amount)).InexactFloat64()
 
+	// 第一个元素
+	firstElement := (*trans)[0]
+	invest.OpenTime = firstElement.FinishTime
 	if invest.Quantity == 0 {
+		// 清仓
 		invest.Status = 1
-
-		invest.CloseTime = time.Now().Format(DateTimeLayout)
+		// 最后一个元素
+		lastElement := (*trans)[len(*trans)-1]
+		invest.CloseTime = lastElement.FinishTime
 	}
 
 	invest.UpdatedAt = time.Now()

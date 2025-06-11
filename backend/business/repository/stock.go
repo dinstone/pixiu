@@ -26,4 +26,7 @@ type StockRepository interface {
 	GetTransaction(ctx context.Context, id int64) (*model.Transaction, error)
 	DeleteTransaction(ctx context.Context, id int64) error
 	GetTransactions(ctx context.Context, investId int64) (*[]model.Transaction, error)
+
+	GetClearList(context context.Context, stime string, ftime string) (*[]model.ClearStats, error)
+	GetClearInvest(context context.Context, stockCode string, startTime string, finishTime string) (*[]model.Investment, error)
 }

@@ -46,3 +46,20 @@ type Transaction struct {
 	CreatedAt  time.Time `json:"createdAt"`            // 创建时间
 	UpdatedAt  time.Time `json:"updatedAt"`            // 更新时间
 }
+
+type ClearStats struct {
+	StockCode   string  `json:"stockCode"`
+	StockName   string  `json:"stockName"`
+	ProfitLoss  float64 `json:"profitLoss"`
+	TotalCount  int     `json:"totalCount"`
+	ProfitCount int     `json:"profitCount"`
+	LossCount   int     `json:"lossCount"`
+	StartTime   string  `json:"startTime"`
+	FinishTime  string  `json:"finishTime"`
+}
+
+type ClearInvest struct {
+	Stock   *StockInfo    `json:"stock"`
+	Stats   *ClearStats   `json:"stats"`
+	Invests *[]Investment `json:"invests"`
+}

@@ -11,6 +11,11 @@ type StockApi struct {
 	app *container.App
 }
 
+type ClearQuery struct {
+	StartTime  string `json:"startTime"`
+	FinishTime string `json:"finishTime"`
+}
+
 func NewStockApi(app *container.App) *StockApi {
 	return &StockApi{
 		app: app,
@@ -119,6 +124,28 @@ func (s *StockApi) GetTransactions(investId int64) (result Result) {
 		return
 	}
 	result.Data = tranArray
+	return
+}
+
+func (s *StockApi) GetClearList(cq ClearQuery) (result Result) {
+	ss := getStockService(s.app)
+	clearList, err := ss.GetClearList(cq.StartTime, cq.FinishTime)
+	if err != nil {
+		handleError(err, &result)
+		return
+	}
+	result.Data = clearList
+	return
+}
+
+func (s *StockApi) GetStockClear(stockCode string, startTime string, finishTime string) (result Result) {
+	ss := getStockService(s.app)
+	cstats, err := ss.GetStockClear(stockCode, startTime, finishTime)
+	if err != nil {
+		handleError(err, &result)
+		return
+	}
+	result.Data = cstats
 	return
 }
 

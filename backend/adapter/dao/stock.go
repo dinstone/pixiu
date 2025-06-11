@@ -91,3 +91,36 @@ func (s StockDao) GetTransactions(ctx context.Context, investId int64) (*[]model
 	err := s.ormer.GDB(ctx).Where("invest_id = ?", investId).Order("finish_time").Find(&transactions).Error
 	return &transactions, WrapGormError(err)
 }
+
+func (s StockDao) GetClearList(ctx context.Context, stime string, ftime string) (*[]model.ClearStats, error) {
+	subQuery := s.ormer.GDB(ctx).Model(model.Investment{}).
+		Select("stock_code, Sum(profit_loss) profit_loss, COUNT(*) total_count, SUM(CASE WHEN profit_loss >= 0 THEN 1 ELSE 0 END) profit_count, SUM(CASE WHEN profit_loss < 0 THEN 1 ELSE 0 END) loss_count").
+		Where("status = ?", 1)
+	if stime != "" {
+		subQuery = subQuery.Where("open_time >= ?", stime)
+	}
+	if ftime != "" {
+		subQuery = subQuery.Where("open_time <= ?", ftime)
+	}
+	subQuery = subQuery.Group("stock_code")
+
+	var clears []model.ClearStats
+	err := s.ormer.GDB(ctx).Model(&model.StockInfo{}).
+		Select("code stock_code, name stock_name, i.profit_loss, i.total_count, i.profit_count, i.loss_count").
+		Joins("JOIN (?) i ON code = i.stock_code", subQuery).
+		Find(&clears).Error
+	return &clears, WrapGormError(err)
+}
+
+func (s *StockDao) GetClearInvest(ctx context.Context, stockCode string, startTime string, finishTime string) (*[]model.Investment, error) {
+	db := s.ormer.GDB(ctx).Model(&model.Investment{}).Where("status=1 and stock_code = ?", stockCode)
+	if startTime != "" {
+		db = db.Where("open_time >= ?", startTime)
+	}
+	if finishTime != "" {
+		db = db.Where("open_time <= ?", finishTime)
+	}
+	var invests []model.Investment
+	err := db.Find(&invests).Error
+	return &invests, WrapGormError(err)
+}

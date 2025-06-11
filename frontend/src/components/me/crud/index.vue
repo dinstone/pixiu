@@ -44,6 +44,7 @@
     :scroll-x="scrollX"
     :columns="columns"
     :data="tableData"
+    :row-props="rowProps"
     :row-key="(row) => row[rowKey]"
     :pagination="isPagination ? pagination : false"
     @update:checked-row-keys="onChecked"
@@ -88,6 +89,10 @@ const props = defineProps({
     default() {
       return {}
     },
+  },
+  rowProps: {
+    type: Function,
+    required: false,
   },
   /**
    * ! 约定接口入参出参
@@ -137,7 +142,7 @@ async function handleQuery() {
       ...props.queryItems,
       ...paginationParams,
     })
-    tableData.value = data?.pageData || data
+    tableData.value = data?.pageData || data || []
     pagination.itemCount = data.total ?? data.length
     if (pagination.itemCount && !tableData.value.length && pagination.page > 1) {
       // 如果当前页数据为空，且总条数不为0，则返回上一页数据

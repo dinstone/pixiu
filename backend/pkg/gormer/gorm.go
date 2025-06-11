@@ -27,9 +27,9 @@ func NewGormer(gdb *gorm.DB) *Gormer {
 
 func (g *Gormer) GDB(ctx context.Context) *gorm.DB {
 	if ctx != nil {
-		gdb := ctx.Value(GormID{}).(*gorm.DB)
+		gdb := ctx.Value(GormID{})
 		if gdb != nil {
-			return gdb
+			return gdb.(*gorm.DB)
 		}
 	}
 	return g.gdb

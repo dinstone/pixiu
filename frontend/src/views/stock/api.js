@@ -1,4 +1,4 @@
-import { AddStock, AddTransaction, DeleteStock, DeleteTransaction, GetHolding, GetStockList, GetTransactions, UpdateStock, UpdateTransaction } from 'wailsjs/go/ipc/StockApi.js'
+import { AddStock, AddTransaction, DeleteStock, DeleteTransaction, GetClearList, GetHolding, GetStockClear, GetStockList, GetTransactions, UpdateStock, UpdateTransaction } from 'wailsjs/go/ipc/StockApi.js'
 
 export default {
   getStocks: () => GetStockList(),
@@ -10,4 +10,7 @@ export default {
   addTrade: data => AddTransaction(data),
   saveTrade: data => UpdateTransaction(data),
   deleteTrade: id => DeleteTransaction(id),
+
+  getClearList: params => GetClearList(params),
+  getStockClear: (code, st, ft) => GetStockClear(code, st, ft),
 }

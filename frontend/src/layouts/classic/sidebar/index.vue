@@ -12,10 +12,9 @@
   <div class="mb-10">
     <UserAvatar />
   </div>
-  <SettingMenu />
-  <MenuCollapse />
+  <SettingMenu class="mb-10"/>
 </template>
 
 <script setup>
-import { MenuCollapse, SettingMenu, SideMenu, UserAvatar } from '@/layouts/components'
+import { SettingMenu, SideMenu, UserAvatar } from '@/layouts/components'
 </script>
