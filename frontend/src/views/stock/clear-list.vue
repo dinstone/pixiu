@@ -35,7 +35,14 @@ const queryItems = ref({})
 const columns = [
   { title: '股票编码', key: 'stockCode' },
   { title: '股票名称', key: 'stockName' },
-  { title: '投资盈亏', key: 'profitLoss' },
+  { title: '投资盈亏', key: 'profitLoss', render(row) {
+    if (row.profitLoss > 0) {
+      return h('span', { style: 'color: red' }, row.profitLoss)
+    }
+    else {
+      return h('span', { style: 'color: blue' }, row.profitLoss)
+    }
+  } },
   { title: '投资次数', key: 'totalCount' },
   { title: '盈利次数', key: 'profitCount' },
   { title: '亏损次数', key: 'lossCount' },

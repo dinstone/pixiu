@@ -5,6 +5,10 @@
         <h3 class="mb-12">
           持仓情况
         </h3>
+        <NButton size="small" type="primary" @click="openClearHistory">
+          <i class="i-fe:clipboard mr-4 text-14" />
+          清仓历史
+        </NButton>
       </div>
       <n-descriptions label-placement="left" bordered :column="3">
         <n-descriptions-item label="股票" :span="2">
@@ -14,7 +18,9 @@
           {{ currentStock.currency }}
         </n-descriptions-item>
         <n-descriptions-item label="持仓盈亏">
-          {{ holding.profitLoss }}
+          <span :style="{ color: holding.profitLoss > 0 ? 'red' : 'blue' }">
+            {{ holding.profitLoss }}
+          </span>
         </n-descriptions-item>
         <n-descriptions-item label="税费合计">
           {{ holding.totalTaxFee }}
@@ -69,7 +75,10 @@ const props = defineProps({
   },
 })
 
-// const currentStock = ref(null)
+const router = useRouter()
+function openClearHistory() {
+  router.push({ path: '/stock/clear/history', query: { stockCode: props.currentStock.code } })
+}
 
 const holding = ref({})
 const tradeList = ref([])

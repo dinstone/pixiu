@@ -15,7 +15,9 @@
           {{ stockClear.totalCount }}
         </n-descriptions-item>
         <n-descriptions-item label="盈亏金额">
-          {{ stockClear.profitLoss }}
+          <span :style="{ color: stockClear.profitLoss > 0 ? 'red' : 'blue' }">
+            {{ stockClear.profitLoss }}
+          </span>
         </n-descriptions-item>
       </n-descriptions>
 
