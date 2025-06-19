@@ -1,4 +1,4 @@
-package repository
+package system
 
 type PreferenceRepository interface {
 	Load() ([]byte, error)

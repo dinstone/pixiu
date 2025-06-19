@@ -1,4 +1,4 @@
-package model
+package system
 
 type Preferences struct {
 	Theme Theme `json:"theme" yaml:"theme"`

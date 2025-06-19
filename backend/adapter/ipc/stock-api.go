@@ -1,8 +1,7 @@
 package ipc
 
 import (
-	"pixiu/backend/business/model"
-	"pixiu/backend/business/service"
+	"pixiu/backend/business/stock"
 	"pixiu/backend/container"
 	"pixiu/backend/pkg/slf4g"
 )
@@ -44,7 +43,7 @@ func (s *StockApi) GetStock(code string) (result Result) {
 	return
 }
 
-func (s *StockApi) AddStock(si *model.StockInfo) (result Result) {
+func (s *StockApi) AddStock(si *stock.StockInfo) (result Result) {
 	ss := getStockService(s.app)
 	err := ss.SaveStock(si)
 	if err != nil {
@@ -54,7 +53,7 @@ func (s *StockApi) AddStock(si *model.StockInfo) (result Result) {
 	return
 }
 
-func (s *StockApi) UpdateStock(si *model.StockInfo) (result Result) {
+func (s *StockApi) UpdateStock(si *stock.StockInfo) (result Result) {
 	ss := getStockService(s.app)
 	err := ss.UpdateStock(si)
 	if err != nil {
@@ -85,7 +84,7 @@ func (s *StockApi) GetHolding(code string) (result Result) {
 	return
 }
 
-func (s *StockApi) AddTransaction(tran *model.Transaction) (result Result) {
+func (s *StockApi) AddTransaction(tran *stock.Transaction) (result Result) {
 	ss := getStockService(s.app)
 	err := ss.AddTransaction(tran)
 	if err != nil {
@@ -96,7 +95,7 @@ func (s *StockApi) AddTransaction(tran *model.Transaction) (result Result) {
 	return
 }
 
-func (s *StockApi) UpdateTransaction(tran *model.Transaction) (result Result) {
+func (s *StockApi) UpdateTransaction(tran *stock.Transaction) (result Result) {
 	ss := getStockService(s.app)
 	err := ss.UpdateTransaction(tran)
 	if err != nil {
@@ -149,6 +148,6 @@ func (s *StockApi) GetStockClear(stockCode string, startTime string, finishTime 
 	return
 }
 
-func getStockService(app *container.App) *service.StockService {
-	return app.Service("StockService").(*service.StockService)
+func getStockService(app *container.App) *stock.StockService {
+	return app.Service("StockService").(*stock.StockService)
 }

@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"pixiu/backend/adapter/dao"
 	"pixiu/backend/adapter/storage"
-	"pixiu/backend/business/model"
-	"pixiu/backend/business/service"
+	"pixiu/backend/business/account"
+	"pixiu/backend/business/stock"
+	"pixiu/backend/business/system"
 	"pixiu/backend/pkg/constant"
 	"pixiu/backend/pkg/gormer"
 	"pixiu/backend/pkg/slf4g"
@@ -71,10 +72,10 @@ func (a *App) Startup(ctx context.Context) {
 	a.gdb = gdb
 
 	// 检查表是否存在
-	exists := gdb.Migrator().HasTable(&model.StockInfo{})
+	exists := gdb.Migrator().HasTable(&stock.StockInfo{})
 	if !exists {
 		err := gdb.AutoMigrate(
-			model.Account{}, model.StockInfo{}, model.Investment{}, model.Transaction{},
+			account.Account{}, stock.StockInfo{}, stock.Investment{}, stock.Transaction{},
 		)
 		if err != nil {
 			logger.Warn("注册数据库表失败: %v\n", err)
@@ -84,11 +85,11 @@ func (a *App) Startup(ctx context.Context) {
 	}
 
 	gormer := gormer.NewGormer(gdb)
-	ss := service.NewStockService(gormer, dao.NewStockDao(gormer))
+	ss := stock.NewStockService(gormer, dao.NewStockDao(gormer))
 	a.svs["StockService"] = ss
 
 	pls := storage.NewLocalStorage("preferences.yaml")
-	ps := service.NewPreferenceService(pls)
+	ps := system.NewPreferenceService(pls)
 	a.svs["PreferenceService"] = ps
 
 	// start window event

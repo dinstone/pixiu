@@ -1,9 +1,7 @@
-package service
+package system
 
 import (
 	"fmt"
-	"pixiu/backend/business/model"
-	"pixiu/backend/business/repository"
 	"pixiu/backend/pkg/slf4g"
 	"reflect"
 	"strings"
@@ -13,11 +11,11 @@ import (
 )
 
 type PreferenceService struct {
-	storage repository.PreferenceRepository
+	storage PreferenceRepository
 	mutex   sync.Mutex
 }
 
-func NewPreferenceService(pr repository.PreferenceRepository) *PreferenceService {
+func NewPreferenceService(pr PreferenceRepository) *PreferenceService {
 	// storage := NewLocalStore("preferences.yaml")
 	storage := pr
 	return &PreferenceService{
@@ -25,7 +23,7 @@ func NewPreferenceService(pr repository.PreferenceRepository) *PreferenceService
 	}
 }
 
-func (p *PreferenceService) getPreferences() (ret model.Preferences) {
+func (p *PreferenceService) getPreferences() (ret Preferences) {
 	b, err := p.storage.Load()
 	if err != nil {
 		return
@@ -36,14 +34,14 @@ func (p *PreferenceService) getPreferences() (ret model.Preferences) {
 }
 
 // GetPreferences Get preferences from local
-func (p *PreferenceService) GetPreferences() (ret model.Preferences) {
+func (p *PreferenceService) GetPreferences() (ret Preferences) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	return p.getPreferences()
 }
 
-func (p *PreferenceService) setPreferences(pf *model.Preferences, key string, value any) error {
+func (p *PreferenceService) setPreferences(pf *Preferences, key string, value any) error {
 	parts := strings.Split(key, ".")
 	if len(parts) > 0 {
 		var reflectValue reflect.Value
@@ -69,7 +67,7 @@ func (p *PreferenceService) setPreferences(pf *model.Preferences, key string, va
 	return fmt.Errorf("invalid key path(%s)", key)
 }
 
-func (p *PreferenceService) savePreferences(pf *model.Preferences) error {
+func (p *PreferenceService) savePreferences(pf *Preferences) error {
 	b, err := yaml.Marshal(pf)
 	if err != nil {
 		return err
@@ -82,7 +80,7 @@ func (p *PreferenceService) savePreferences(pf *model.Preferences) error {
 }
 
 // SetPreferences replace preferences
-func (p *PreferenceService) SetPreferences(pf *model.Preferences) error {
+func (p *PreferenceService) SetPreferences(pf *Preferences) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 

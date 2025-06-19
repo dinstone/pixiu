@@ -1,4 +1,4 @@
-package model
+package account
 
 type Account struct {
 	Id       int64

@@ -1,8 +1,6 @@
-package service
+package stock
 
 import (
-	"pixiu/backend/business/model"
-	"pixiu/backend/business/repository"
 	"pixiu/backend/pkg/exception"
 	"pixiu/backend/pkg/gormer"
 	"time"
@@ -14,18 +12,18 @@ const DateTimeLayout = "2006-01-02 15:04:05"
 
 type StockService struct {
 	gtm gormer.GormTM
-	sr  repository.StockRepository
+	sr  StockRepository
 }
 
-func NewStockService(gtm gormer.GormTM, sr repository.StockRepository) *StockService {
+func NewStockService(gtm gormer.GormTM, sr StockRepository) *StockService {
 	return &StockService{gtm, sr}
 }
 
-func (ss *StockService) GetClearList(stime string, ftime string) (*[]model.ClearStats, error) {
+func (ss *StockService) GetClearList(stime string, ftime string) (*[]ClearStats, error) {
 	return ss.sr.GetClearList(ss.gtm.Context(), stime, ftime)
 }
 
-func (ss *StockService) GetStockClear(stockCode string, startTime string, finishTime string) (*model.ClearInvest, error) {
+func (ss *StockService) GetStockClear(stockCode string, startTime string, finishTime string) (*ClearInvest, error) {
 	if stockCode == "" {
 		return nil, exception.NewBusiness(400, "stock code is required")
 	}
@@ -40,26 +38,31 @@ func (ss *StockService) GetStockClear(stockCode string, startTime string, finish
 
 	var totalCount int
 	var profitLoss float64
+	var invests []Investment
 	for _, ci := range *cinvests {
 		totalCount++
 		profitLoss += ci.ProfitLoss
+		openTime, _ := time.Parse(DateTimeLayout, ci.OpenTime)
+		closeTime, _ := time.Parse(DateTimeLayout, ci.CloseTime)
+		ci.HoldingDays = int(closeTime.Sub(openTime).Hours() / 24)
+		invests = append(invests, ci)
 	}
 
-	return &model.ClearInvest{sinfo, &model.ClearStats{TotalCount: totalCount, ProfitLoss: profitLoss, StartTime: startTime, FinishTime: finishTime}, cinvests}, nil
+	return &ClearInvest{Stock: sinfo, Stats: &ClearStats{TotalCount: totalCount, ProfitLoss: profitLoss, StartTime: startTime, FinishTime: finishTime}, Invests: &invests}, nil
 }
 
-func (ss StockService) GetStockList() (*[]model.StockInfo, error) {
+func (ss StockService) GetStockList() (*[]StockInfo, error) {
 	return ss.sr.AliveStocks(ss.gtm.Context())
 }
 
-func (ss StockService) GetStock(code string) (*model.StockInfo, error) {
+func (ss StockService) GetStock(code string) (*StockInfo, error) {
 	if code == "" {
 		return nil, exception.NewBusiness(400, "code is required")
 	}
 	return ss.sr.GetStock(ss.gtm.Context(), code)
 }
 
-func (ss StockService) SaveStock(si *model.StockInfo) error {
+func (ss StockService) SaveStock(si *StockInfo) error {
 	if si.Code == "" {
 		return exception.NewBusiness(400, "code is required")
 	}
@@ -76,7 +79,7 @@ func (ss StockService) SaveStock(si *model.StockInfo) error {
 	return ss.sr.SaveStock(ss.gtm.Context(), si)
 }
 
-func (ss StockService) UpdateStock(si *model.StockInfo) error {
+func (ss StockService) UpdateStock(si *StockInfo) error {
 	if si.Code == "" {
 		return exception.NewBusiness(400, "code is required")
 	}
@@ -105,7 +108,7 @@ func (ss StockService) DeleteStock(code string) error {
 	return ss.sr.DeleteStock(ss.gtm.Context(), code)
 }
 
-func (ss StockService) GetHolding(code string) (*model.Investment, error) {
+func (ss StockService) GetHolding(code string) (*Investment, error) {
 	if code == "" {
 		return nil, exception.NewBusiness(400, "code is required")
 	}
@@ -139,7 +142,7 @@ func (ss StockService) DeleteTransaction(tranId int64) error {
 	return ss.computeHolding(tran.InvestID)
 }
 
-func (ss StockService) UpdateTransaction(tran *model.Transaction) error {
+func (ss StockService) UpdateTransaction(tran *Transaction) error {
 	if tran.ID == 0 {
 		return exception.NewService(400, "transaction id is required")
 	}
@@ -173,7 +176,7 @@ func floatMul(p float64, q int) float64 {
 	return pd.Mul(qd).RoundBank(3).InexactFloat64()
 }
 
-func (ss StockService) AddTransaction(tran *model.Transaction) error {
+func (ss StockService) AddTransaction(tran *Transaction) error {
 	if tran.StockCode == "" {
 		return exception.NewBusiness(400, "stock code is empty")
 	}
@@ -190,7 +193,7 @@ func (ss StockService) AddTransaction(tran *model.Transaction) error {
 			return exception.NewBusiness(400, "action is sell but holding is closed")
 		}
 		// add holding investment for opening
-		invest = &model.Investment{StockCode: tran.StockCode, Status: 0,
+		invest = &Investment{StockCode: tran.StockCode, Status: 0,
 			CreatedAt: nowTime, UpdatedAt: nowTime, OpenTime: nowTime.Format(DateTimeLayout)}
 		err := ss.sr.CreateInvestment(ss.gtm.Context(), invest)
 		if err != nil {
@@ -273,7 +276,7 @@ func (ss StockService) computeHolding(investId int64) error {
 	return nil
 }
 
-func (ss StockService) GetTransactions(investId int64) (*[]model.Transaction, error) {
+func (ss StockService) GetTransactions(investId int64) (*[]Transaction, error) {
 	trans, err := ss.sr.GetTransactions(ss.gtm.Context(), investId)
 	if err != nil {
 		return nil, exception.WrapService(500, "dao error", err)

@@ -28,8 +28,8 @@ func main() {
 	// Create an instance of the app structure
 	app := container.NewApp()
 
-	papi := ipc.NewPreferenceApi(app)
 	sapi := ipc.NewStockApi(app)
+	papi := ipc.NewPreferenceApi(app)
 
 	// menu
 	isMacOS := runtime.GOOS == "darwin"

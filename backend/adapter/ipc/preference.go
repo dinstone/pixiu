@@ -1,8 +1,7 @@
 package ipc
 
 import (
-	"pixiu/backend/business/model"
-	"pixiu/backend/business/service"
+	"pixiu/backend/business/system"
 	"pixiu/backend/container"
 )
 
@@ -20,7 +19,7 @@ func (p *PreferenceApi) GetPreferences() (ret Result) {
 	return
 }
 
-func (p *PreferenceApi) SetPreferences(pf *model.Preferences) (ret Result) {
+func (p *PreferenceApi) SetPreferences(pf *system.Preferences) (ret Result) {
 	ps := getPreferenceService(p.app)
 	if err := ps.SetPreferences(pf); err != nil {
 		ret.Code = 500
@@ -38,6 +37,6 @@ func (p *PreferenceApi) UpdatePreferences(values map[string]any) (ret Result) {
 	return
 }
 
-func getPreferenceService(app *container.App) *service.PreferenceService {
-	return app.Service("PreferenceService").(*service.PreferenceService)
+func getPreferenceService(app *container.App) *system.PreferenceService {
+	return app.Service("PreferenceService").(*system.PreferenceService)
 }
