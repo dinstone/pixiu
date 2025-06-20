@@ -13,9 +13,10 @@
         <img src="@/assets/images/logo.png" alt="Logo">
       </div>
       <div class="about-app-title">
-        {{ title }}
+        {{ appInfo.appName }}
       </div>
-      <n-text>{{ version }}</n-text>
+      <n-text>{{ appInfo.version }}</n-text>
+      <n-text>{{ appInfo.comments }}</n-text>
       <n-space :size="5" :wrap="false" :wrap-item="false" align="center">
         <n-text class="cursor-pointer" @click="onOpenSource">
           源码工程
@@ -26,7 +27,7 @@
         </n-text>
       </n-space>
       <div class="about-copyright">
-        Copyright © 2025 dinstone All rights reserved
+        <n-text>{{ appInfo.copyright }}</n-text>
       </div>
     </n-space>
   </MeModal>
@@ -35,19 +36,12 @@
 <script setup>
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
+import { useAppStore } from '@/store'
 import { BrowserOpenURL } from 'wailsjs/runtime/runtime.js'
 
-const title = import.meta.env.VITE_TITLE
+// const title = import.meta.env.VITE_TITLE
 
-const [modalRef] = useModal()
-const version = ref('')
-
-onMounted(() => {
-  // GetAppVersion().then(({ data }) => {
-  //     version.value = data.version
-  // })
-  version.value = '1.0.0'
-})
+const appInfo = useAppStore().appInfo
 
 function onOpenSource() {
   BrowserOpenURL('https://github.com/dinstone/pixiu')
@@ -57,6 +51,7 @@ function onOpenWebsite() {
   BrowserOpenURL('https://github.com/zclzone/vue-naive-admin')
 }
 
+const [modalRef] = useModal()
 function show() {
   modalRef.value?.open()
 }

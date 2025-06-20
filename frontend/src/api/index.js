@@ -6,19 +6,17 @@
  * Copyright © 2023 Ronnie Zhang(大脸怪) | https://isme.top
  **********************************/
 
+import { useAuthStore } from '@/store'
 import { request } from '@/utils'
+import { GetUserDetail } from 'wailsjs/go/ipc/UaacApi.js'
 
 export default {
   // 获取用户信息
-  getUserDetail: () => request.get('/user/detail'),
-  // 刷新token
-  refreshToken: () => request.get('/auth/refresh/token'),
+  getUserDetail: () => GetUserDetail(useAuthStore().accessToken),
   // 登出
-  logout: () => request.post('/auth/logout', {}, { needTip: false }),
+  logout: () => '',
   // 切换当前角色
   switchCurrentRole: role => request.post(`/auth/current-role/switch/${role}`),
-  // 获取角色权限
-  getRolePermissions: () => request.get('/role/permissions/tree'),
   // 验证菜单路径
   validateMenuPath: path => ({ path, data: true }),
 }

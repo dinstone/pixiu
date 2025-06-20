@@ -3,10 +3,10 @@ import { basePermissions } from '@/settings'
 
 export async function getUserInfo() {
   const res = await api.getUserDetail()
-  const { id, username, profile, roles, currentRole } = res.data || {}
+  const { account, profile, roles, currentRole } = res.data || {}
   return {
-    id,
-    username,
+    id: account?.id,
+    username: account?.username,
     avatar: profile?.avatar,
     nickName: profile?.nickName,
     gender: profile?.gender,

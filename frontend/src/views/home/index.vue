@@ -16,7 +16,6 @@
             <span class="text-20 opacity-80">
               Hello, {{ userStore.nickName ?? userStore.username }}
             </span>
-            <span class="mt-4 opacity-50">当前角色：{{ userStore.currentRole?.name }}</span>
           </div>
         </div>
 

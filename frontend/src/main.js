@@ -15,7 +15,7 @@ import App from './App.vue'
 import { setupDirectives } from './directives'
 import { setupRouter } from './router'
 import { setupStore } from './store'
-import { loadEnvironment, setupNaiveDiscreteApi } from './utils'
+import { setupEnvironment, setupNaiveDiscreteApi } from './utils'
 import '@/styles/reset.css'
 import '@/styles/global.css'
 import 'uno.css'
@@ -24,10 +24,10 @@ async function bootstrap() {
   const app = createApp(App)
   setupStore(app)
 
-  await loadEnvironment()
+  await setupEnvironment()
 
   const appStore = useAppStore()
-  await appStore.loadPreferences()
+  await appStore.setupAppStore()
 
   setupDirectives(app)
   await setupRouter(app)

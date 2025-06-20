@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"pixiu/backend/adapter/ipc"
 	"pixiu/backend/container"
-	"pixiu/backend/pkg/constant"
 	"runtime"
 
 	"github.com/wailsapp/wails/v2"
@@ -28,8 +27,9 @@ func main() {
 	// Create an instance of the app structure
 	app := container.NewApp()
 
+	uapi := ipc.NewUaacApi(app)
 	sapi := ipc.NewStockApi(app)
-	papi := ipc.NewPreferenceApi(app)
+	papi := ipc.NewSystemApi(app)
 
 	// menu
 	isMacOS := runtime.GOOS == "darwin"
@@ -42,7 +42,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:            constant.AppName,
+		Title:            app.Info.AppName,
 		Width:            1024,
 		Height:           768,
 		MinWidth:         960,
@@ -59,13 +59,13 @@ func main() {
 		OnDomReady:       app.DomReady,
 		OnShutdown:       app.Shutdown,
 		Bind: []interface{}{
-			papi, sapi,
+			uapi, papi, sapi,
 		},
 		Mac: &mac.Options{
 			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{
-				Title:   fmt.Sprintf("%s %s", constant.AppName, "1.0.0"),
-				Message: "A modern lightweight cross-platform Pixiu SIM desktop system.\n\nCopyright © 2025",
+				Title:   fmt.Sprintf("%s %s", app.Info.AppName, app.Info.Version),
+				Message: app.Info.Comments + "\n\n" + app.Info.Copyright,
 				Icon:    icon,
 			},
 			WebviewIsTransparent: false,
@@ -77,7 +77,7 @@ func main() {
 			DisableFramelessWindowDecorations: false,
 		},
 		Linux: &linux.Options{
-			ProgramName:         constant.AppName,
+			ProgramName:         app.Info.AppName,
 			Icon:                icon,
 			WebviewGpuPolicy:    linux.WebviewGpuPolicyOnDemand,
 			WindowIsTranslucent: true,

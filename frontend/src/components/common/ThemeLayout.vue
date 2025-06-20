@@ -114,7 +114,7 @@ import { useModal } from '@/composables'
 import { useAppStore } from '@/store'
 import { getPresetColors } from '@arco-design/color'
 import { useToggle } from '@vueuse/core'
-import { UpdatePreferences } from 'wailsjs/go/ipc/PreferenceApi'
+import { UpdatePreferences } from 'wailsjs/go/ipc/SystemApi'
 
 const primaryColors = Object.entries(getPresetColors()).map(([, value]) => value.primary)
 const appStore = useAppStore()

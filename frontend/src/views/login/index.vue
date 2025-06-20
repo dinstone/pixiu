@@ -45,32 +45,10 @@
           </template>
         </n-input>
 
-        <div class="mt-20 flex items-center">
-          <n-input
-            v-model:value="loginInfo.captcha"
-            class="h-40 items-center"
-            palceholder="请输入验证码"
-            :maxlength="4"
-            @keydown.enter="handleLogin()"
-          >
-            <template #prefix>
-              <i class="i-fe:key mr-12 opacity-20" />
-            </template>
-          </n-input>
-          <img
-            v-if="captchaUrl"
-            :src="captchaUrl"
-            alt="验证码"
-            height="40"
-            class="ml-12 w-80 cursor-pointer"
-            @click="initCaptcha"
-          >
-        </div>
-
         <n-checkbox
           class="mt-20"
           :checked="rememberRef"
-          label="记住我"
+          label="记住我，可一键登录"
           :on-update:checked="(val) => (rememberRef = val)"
         />
 
@@ -81,7 +59,7 @@
             ghost
             @click="quickLogin()"
           >
-            一键体验
+            一键登录
           </n-button>
 
           <n-button
@@ -113,6 +91,7 @@ const title = import.meta.env.VITE_TITLE
 
 const rememberRef = useStorage('isRemember', true)
 const usernameRef = useStorage('username')
+const passwordRef = useStorage('password')
 
 const loginInfo = ref({ username: usernameRef.value, password: '' })
 
@@ -123,29 +102,37 @@ const initCaptcha = throttle(() => {
 initCaptcha()
 
 function quickLogin() {
-  loginInfo.value.username = 'admin'
-  loginInfo.value.password = '123456'
+  loginInfo.value.username = usernameRef.value
+  loginInfo.value.password = passwordRef.value
   handleLogin(true)
 }
 
 const loading = ref(false)
 async function handleLogin(isQuick) {
   const { username, password, captcha } = loginInfo.value
-  if (!username || !password)
+  if (!username || !password) {
     return $message.warning('请输入账号和密码')
-  if (!isQuick && !captcha)
-    return $message.warning('请输入验证码')
+  }
+
   try {
     loading.value = true
     $message.loading('正在验证，请稍后...', { key: 'login' })
-    const { data } = await api.login({ username, password: password.toString(), captcha, isQuick })
-    if (rememberRef.value) {
-      usernameRef.value = username
+    const res = await api.login({ username, password, captcha, isQuick })
+    if (res.code === 0) {
+      if (rememberRef.value) {
+        usernameRef.value = username
+        passwordRef.value = res.data
+      }
+      else {
+        usernameRef.value = ''
+        passwordRef.value = ''
+      }
+      onLoginSuccess(res.data)
     }
     else {
-      usernameRef.value = ''
+      passwordRef.value = ''
+      $message.error(res.mesg, { key: 'login' })
     }
-    onLoginSuccess(data)
   }
   catch (error) {
     // 10003为验证码错误专属业务码
@@ -159,8 +146,8 @@ async function handleLogin(isQuick) {
   loading.value = false
 }
 
-async function onLoginSuccess(data = {}) {
-  authStore.setToken(data)
+async function onLoginSuccess(token) {
+  authStore.setToken(token)
   $message.loading('登录中...', { key: 'login' })
   try {
     $message.success('登录成功', { key: 'login' })

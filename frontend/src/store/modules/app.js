@@ -12,11 +12,12 @@ import { useDark } from '@vueuse/core'
 import { get } from 'lodash'
 import { NButton, NSpace } from 'naive-ui'
 import { defineStore } from 'pinia'
-import { GetPreferences } from 'wailsjs/go/ipc/PreferenceApi'
+import { GetAppInfo, GetPreferences } from 'wailsjs/go/ipc/SystemApi'
 import { BrowserOpenURL } from 'wailsjs/runtime/runtime.js'
 
 export const useAppStore = defineStore('app', {
   state: () => ({
+    appInfo: {},
     collapsed: true,
     isDark: useDark(),
     layout: defaultLayout,
@@ -31,7 +32,14 @@ export const useAppStore = defineStore('app', {
         color: defaultPrimaryColor,
       }
     },
-    async loadPreferences() {
+    async setupAppStore() {
+      // lazy load app info
+      GetAppInfo().then(({ code, data }) => {
+        if (code === 0) {
+          this.appInfo = data
+        }
+      })
+      // load preferences
       const { code, data } = await GetPreferences()
       if (code === 0) {
         const layout = get(data, 'theme.layout')

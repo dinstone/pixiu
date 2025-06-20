@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 	"pixiu/backend/adapter/dao"
 	"pixiu/backend/adapter/storage"
-	"pixiu/backend/business/account"
 	"pixiu/backend/business/stock"
 	"pixiu/backend/business/system"
+	"pixiu/backend/business/uaac"
 	"pixiu/backend/pkg/constant"
 	"pixiu/backend/pkg/gormer"
 	"pixiu/backend/pkg/slf4g"
+	"pixiu/backend/pkg/utils"
 	"time"
 
 	"github.com/vrischmann/userdir"
@@ -27,11 +28,20 @@ type App struct {
 	gdb *gorm.DB
 
 	svs map[string]interface{}
+
+	Info system.AppInfo
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{svs: make(map[string]interface{})}
+	info := system.AppInfo{
+		AppName:   constant.AppName,
+		AppCode:   constant.AppCode,
+		Version:   "1.1.0",
+		Comments:  "A modern lightweight cross-platform desktop system.",
+		Copyright: "Copyright © 2025 dinstone all rights reserved",
+	}
+	return &App{svs: make(map[string]interface{}), Info: info}
 }
 
 func (a *App) Service(name string) interface{} {
@@ -72,25 +82,33 @@ func (a *App) Startup(ctx context.Context) {
 	a.gdb = gdb
 
 	// 检查表是否存在
-	exists := gdb.Migrator().HasTable(&stock.StockInfo{})
+	exists := gdb.Migrator().HasTable(&uaac.Account{})
 	if !exists {
 		err := gdb.AutoMigrate(
-			account.Account{}, stock.StockInfo{}, stock.Investment{}, stock.Transaction{},
+			uaac.Account{}, uaac.Profile{}, stock.StockInfo{}, stock.Investment{}, stock.Transaction{},
 		)
 		if err != nil {
 			logger.Warn("注册数据库表失败: %v\n", err)
 			panic(err)
 		}
+
+		// init admin user account
+		pwd := utils.BcryptHash("admin@123")
+		gdb.Save(&uaac.Account{Username: "admin", Password: pwd, Disabled: false})
+		gdb.Save(&uaac.Profile{Username: "admin", NickName: "管理员", Avatar: "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif"})
+
 		logger.Info("数据库表创建成功")
 	}
 
 	gormer := gormer.NewGormer(gdb)
+	uacs := uaac.NewUaacService(gormer, dao.NewUaacDao(gormer))
 	ss := stock.NewStockService(gormer, dao.NewStockDao(gormer))
+	a.svs["UaacService"] = uacs
 	a.svs["StockService"] = ss
 
-	pls := storage.NewLocalStorage("preferences.yaml")
-	ps := system.NewPreferenceService(pls)
-	a.svs["PreferenceService"] = ps
+	pls := storage.NewLocalStorage(constant.AppCode, "preferences.yaml")
+	pss := system.NewSystemService(pls)
+	a.svs["SystemService"] = pss
 
 	// start window event
 	go loopWindowEvent(ctx)

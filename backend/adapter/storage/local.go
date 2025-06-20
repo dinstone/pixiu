@@ -3,7 +3,6 @@ package storage
 import (
 	"os"
 	"path"
-	"pixiu/backend/pkg/constant"
 
 	"github.com/vrischmann/userdir"
 )
@@ -15,9 +14,9 @@ type LocalStorage struct {
 }
 
 // NewLocalStorage returns a localStore instance.
-func NewLocalStorage(filename string) *LocalStorage {
+func NewLocalStorage(parentdir string, filename string) *LocalStorage {
 	return &LocalStorage{
-		ConfPath: path.Join(userdir.GetConfigHome(), constant.AppCode, filename),
+		ConfPath: path.Join(userdir.GetConfigHome(), parentdir, filename),
 	}
 }
 

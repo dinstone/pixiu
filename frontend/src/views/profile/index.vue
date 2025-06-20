@@ -8,7 +8,7 @@
 
 <template>
   <AppPage show-footer>
-    <n-card>
+    <n-card title="账户信息">
       <n-space align="center">
         <n-avatar round :size="100" :src="userStore.avatar" />
         <div class="ml-20">
@@ -25,14 +25,14 @@
               更改头像
             </n-button>
             <span class="ml-12 opacity-60">
-              修改头像只支持在线链接，不提供上传图片功能，如有需要可自行对接！
+              修改头像只支持在线链接，不提供上传图片功能！
             </span>
           </div>
         </div>
       </n-space>
     </n-card>
 
-    <n-card class="mt-20" title="个人资料信息">
+    <n-card class="mt-15" title="个人信息">
       <template #header-extra>
         <n-button type="primary" text @click="profileModalRef.open()">
           <i class="i-fe:edit mr-4" />
@@ -72,9 +72,6 @@
         label-placement="left"
         require-mark-placement="left"
       >
-        <n-form-item label="原密码" path="oldPassword" :rule="required">
-          <n-input v-model:value="pwdForm.oldPassword" type="password" placeholder="请输入原密码" show-password-on="mousedown" />
-        </n-form-item>
         <n-form-item label="新密码" path="newPassword" :rule="required">
           <n-input v-model:value="pwdForm.newPassword" type="password" placeholder="请输入新密码" show-password-on="mousedown" />
         </n-form-item>

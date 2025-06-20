@@ -10,20 +10,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type PreferenceService struct {
+type SystemService struct {
 	storage PreferenceRepository
 	mutex   sync.Mutex
 }
 
-func NewPreferenceService(pr PreferenceRepository) *PreferenceService {
-	// storage := NewLocalStore("preferences.yaml")
-	storage := pr
-	return &PreferenceService{
-		storage: storage,
+func NewSystemService(pr PreferenceRepository) *SystemService {
+	return &SystemService{
+		storage: pr,
 	}
 }
 
-func (p *PreferenceService) getPreferences() (ret Preferences) {
+func (p *SystemService) getPreferences() (ret Preferences) {
 	b, err := p.storage.Load()
 	if err != nil {
 		return
@@ -34,14 +32,14 @@ func (p *PreferenceService) getPreferences() (ret Preferences) {
 }
 
 // GetPreferences Get preferences from local
-func (p *PreferenceService) GetPreferences() (ret Preferences) {
+func (p *SystemService) GetPreferences() (ret Preferences) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	return p.getPreferences()
 }
 
-func (p *PreferenceService) setPreferences(pf *Preferences, key string, value any) error {
+func (p *SystemService) setPreferences(pf *Preferences, key string, value any) error {
 	parts := strings.Split(key, ".")
 	if len(parts) > 0 {
 		var reflectValue reflect.Value
@@ -67,7 +65,7 @@ func (p *PreferenceService) setPreferences(pf *Preferences, key string, value an
 	return fmt.Errorf("invalid key path(%s)", key)
 }
 
-func (p *PreferenceService) savePreferences(pf *Preferences) error {
+func (p *SystemService) savePreferences(pf *Preferences) error {
 	b, err := yaml.Marshal(pf)
 	if err != nil {
 		return err
@@ -80,7 +78,7 @@ func (p *PreferenceService) savePreferences(pf *Preferences) error {
 }
 
 // SetPreferences replace preferences
-func (p *PreferenceService) SetPreferences(pf *Preferences) error {
+func (p *SystemService) SetPreferences(pf *Preferences) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -88,7 +86,7 @@ func (p *PreferenceService) SetPreferences(pf *Preferences) error {
 }
 
 // UpdatePreferences update values by key paths, the key path use "." to indicate multiple level
-func (p *PreferenceService) UpdatePreferences(values map[string]any) error {
+func (p *SystemService) UpdatePreferences(values map[string]any) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 

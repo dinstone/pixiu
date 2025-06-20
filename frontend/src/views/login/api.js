@@ -1,15 +1,14 @@
-/**********************************
- * @Author: Ronnie Zhang
- * @LastEditor: Ronnie Zhang
- * @LastEditTime: 2023/12/05 21:28:30
- * @Email: zclzone@outlook.com
- * Copyright © 2023 Ronnie Zhang(大脸怪) | https://isme.top
- **********************************/
-
-import { request } from '@/utils'
+import { AuthenAccessToken, AuthenPassword } from 'wailsjs/go/ipc/UaacApi.js'
 
 export default {
-  toggleRole: data => request.post('/auth/role/toggle', data),
-  login: data => request.post('/auth/login', data, { needToken: false }),
-  getUser: () => request.get('/user/detail'),
+
+  login: (data) => {
+    if (data.isQuick) {
+      return AuthenAccessToken(data.username, data.password)
+    }
+    else {
+      return AuthenPassword(data.username, data.password)
+    }
+  },
+
 }
