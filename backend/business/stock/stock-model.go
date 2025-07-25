@@ -10,7 +10,7 @@ type StockInfo struct {
 	Name      string    `json:"name"`                   // 名称
 	Market    string    `json:"market"`                 // 股市（A股、港股等）
 	Currency  string    `json:"currency"`               // 币种（人民币、港币、美元等）
-	Status    int       `json:"status"`                 // 状态（-1-删除、0-正常）
+	Status    int       `json:"status"`                 // 状态（-1:删除、0:正常）
 	CreatedAt time.Time `json:"createdAt"`              // 创建时间
 	UpdatedAt time.Time `json:"updatedAt"`              // 更新时间
 }
@@ -24,7 +24,7 @@ type Investment struct {
 	CostPrice   float64   `json:"costPrice"`            // 成本价格
 	Quantity    int       `json:"quantity"`             // 持仓数量
 	Amount      float64   `json:"amount"`               // 持仓金额
-	Status      int       `json:"status"`               // 状态（-1-删除、0-持仓、1-清仓）
+	Status      int       `json:"status"`               // 状态（-1:删除、0:持仓、1:清仓）
 	HoldingDays int       `gorm:"-" json:"holdingDays"` // 持仓天数
 	OpenTime    string    `json:"openTime"`             // 建仓时间
 	CloseTime   string    `json:"closeTime"`            // 清仓时间

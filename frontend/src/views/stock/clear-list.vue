@@ -43,9 +43,13 @@ const columns = [
       return h('span', { style: 'color: blue' }, row.profitLoss)
     }
   } },
-  { title: '投资次数', key: 'totalCount' },
+  { title: '清仓次数', key: 'totalCount' },
   { title: '盈利次数', key: 'profitCount' },
-  { title: '亏损次数', key: 'lossCount' },
+  { title: '盈利比率', key: 'profitRate', render(row) {
+    // 计算盈利比率，保留两位小数
+    const rate = row.totalCount > 0 ? ((row.profitCount / row.totalCount) * 100).toFixed(2) : 0
+    return h('span', `${rate}%`)
+  } },
 ]
 
 onMounted(() => {
