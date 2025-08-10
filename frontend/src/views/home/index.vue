@@ -41,13 +41,7 @@
           这是一款极简风格的 股票投资管理 桌面系统，包含前后端解决方案，前端使用 Wails + Vite + Vue3 + NaiveUI + Pinia + Unocss，后端使用 Go + Gorm + Sqlite，简单易用，赏心悦目，历经十几次重构和细节打磨，诚意满满！！
         </p>
         <footer class="mt-12 flex items-center justify-end">
-          <n-button
-            type="primary"
-            ghost
-            tag="a"
-            href="https://isme.top"
-            target="__blank"
-          >
+          <n-button type="primary" ghost @click="goToSite('https://isme.top')">
             感谢 vue-naive-admin
           </n-button>
         </footer>
@@ -154,6 +148,13 @@ import * as echarts from 'echarts/core'
 import { UniversalTransition } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import VChart from 'vue-echarts'
+
+const router = useRouter()
+function goToSite(url) {
+  if (url) {
+    router.push({ name: 'GoToSite', query: { site: url } })
+  }
+}
 
 const userStore = useUserStore()
 

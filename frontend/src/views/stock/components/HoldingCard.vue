@@ -5,10 +5,16 @@
         <h3 class="mb-12">
           持仓情况
         </h3>
-        <NButton size="small" type="primary" @click="openClearHistory">
-          <i class="i-fe:clipboard mr-4 text-14" />
-          清仓历史
-        </NButton>
+        <div class="flex">
+          <NButton size="small" type="primary" class="ml-12" @click="openMarketData">
+            <i class="i-fe:trending-up mr-4 text-14" />
+            实时行情
+          </NButton>
+          <NButton size="small" type="primary" class="ml-12" @click="openClearHistory">
+            <i class="i-fe:clipboard mr-4 text-14" />
+            清仓历史
+          </NButton>
+        </div>
       </div>
       <n-descriptions label-placement="left" bordered :column="3">
         <n-descriptions-item label="股票" :span="2">
@@ -78,6 +84,11 @@ const props = defineProps({
 const router = useRouter()
 function openClearHistory() {
   router.push({ path: '/stock/clear/history', query: { stockCode: props.currentStock.code } })
+}
+
+function openMarketData() {
+  const siteUrl = `https://xueqiu.com/S/${props.currentStock.code}`
+  router.push({ name: 'GoToSite', query: { site: siteUrl } })
 }
 
 const holding = ref({})

@@ -67,4 +67,12 @@ export const basePermissions = [{
   show: false,
   enable: true,
   order: 99,
+}, {
+  code: 'GoToSite',
+  name: '外链',
+  type: 'MENU',
+  path: 'https://GoToSite',
+  order: 98,
+  enable: true,
+  show: false,
 }]
