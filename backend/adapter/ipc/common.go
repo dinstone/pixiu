@@ -14,7 +14,14 @@ type Result struct {
 func Failure(err error) *Result {
 	result := &Result{}
 	if err != nil {
-		handleError(err, result)
+		var appErr exception.AppError
+		if errors.As(err, &appErr) {
+			result.Code = appErr.Code()
+			result.Mesg = appErr.Error()
+		} else {
+			result.Code = 500
+			result.Mesg = err.Error()
+		}
 	} else {
 		result.Code = 599
 	}
@@ -27,19 +34,4 @@ func Success(data any) *Result {
 		Mesg: "ok",
 		Data: data,
 	}
-}
-
-func handleError(err error, result *Result) {
-	var appErr exception.AppError
-	if errors.As(err, &appErr) {
-		result.Code = appErr.Code()
-		result.Mesg = appErr.Error()
-	} else {
-		result.Code = 500
-		result.Mesg = err.Error()
-	}
-}
-
-func handleSuccess(token any, result *Result) {
-	result.Data = token
 }

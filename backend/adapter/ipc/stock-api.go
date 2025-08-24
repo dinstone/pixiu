@@ -3,7 +3,6 @@ package ipc
 import (
 	"pixiu/backend/business/stock"
 	"pixiu/backend/container"
-	"pixiu/backend/pkg/slf4g"
 )
 
 type StockApi struct {
@@ -21,131 +20,112 @@ func NewStockApi(app *container.App) *StockApi {
 	}
 }
 
-func (s *StockApi) GetStockList() (result Result) {
+func (s *StockApi) GetStockList() *Result {
 	ss := getStockService(s.app)
 	sis, err := ss.GetStockList()
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	result.Data = sis
-	return
+	return Success(sis)
 }
 
-func (s *StockApi) GetStock(code string) (result Result) {
+func (s *StockApi) GetStock(code string) *Result {
 	ss := getStockService(s.app)
 	si, err := ss.GetStock(code)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	result.Data = si
-	return
+	return Success(si)
 }
 
-func (s *StockApi) AddStock(si *stock.StockInfo) (result Result) {
+func (s *StockApi) AddStock(si *stock.StockInfo) *Result {
 	ss := getStockService(s.app)
 	err := ss.SaveStock(si)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	return
+	return Success(true)
 }
 
-func (s *StockApi) UpdateStock(si *stock.StockInfo) (result Result) {
+func (s *StockApi) UpdateStock(si *stock.StockInfo) *Result {
 	ss := getStockService(s.app)
 	err := ss.UpdateStock(si)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	return
+	return Success(true)
 }
 
-func (s *StockApi) DeleteStock(code string) (result Result) {
+func (s *StockApi) DeleteStock(code string) *Result {
 	ss := getStockService(s.app)
 	err := ss.DeleteStock(code)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	return
+	return Success(true)
 }
 
-func (s *StockApi) GetHolding(code string) (result Result) {
+func (s *StockApi) GetHolding(code string) *Result {
 	ss := getStockService(s.app)
 	invest, err := ss.GetHolding(code)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	result.Data = invest
-	return
+	return Success(invest)
 }
 
-func (s *StockApi) AddTransaction(tran *stock.Transaction) (result Result) {
+func (s *StockApi) AddTransaction(tran *stock.Transaction) *Result {
 	ss := getStockService(s.app)
 	err := ss.AddTransaction(tran)
 	if err != nil {
-		slf4g.Get().Warn("add transaction error: %v", err)
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	return
+	return Success(true)
 }
 
-func (s *StockApi) UpdateTransaction(tran *stock.Transaction) (result Result) {
+func (s *StockApi) UpdateTransaction(tran *stock.Transaction) *Result {
 	ss := getStockService(s.app)
 	err := ss.UpdateTransaction(tran)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	return
+	return Success(true)
 }
 
-func (s *StockApi) DeleteTransaction(tranId int64) (result Result) {
+func (s *StockApi) DeleteTransaction(tranId int64) *Result {
 	ss := getStockService(s.app)
 	err := ss.DeleteTransaction(tranId)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	return
+	return Success(true)
 }
 
-func (s *StockApi) GetTransactions(investId int64) (result Result) {
+func (s *StockApi) GetTransactions(investId int64) *Result {
 	ss := getStockService(s.app)
 	tranArray, err := ss.GetTransactions(investId)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	result.Data = tranArray
-	return
+	return Success(tranArray)
 }
 
-func (s *StockApi) GetClearList(cq ClearQuery) (result Result) {
+func (s *StockApi) GetClearList(cq ClearQuery) *Result {
 	ss := getStockService(s.app)
 	clearList, err := ss.GetClearList(cq.StartTime, cq.FinishTime)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	result.Data = clearList
-	return
+	return Success(clearList)
 }
 
-func (s *StockApi) GetStockClear(stockCode string, startTime string, finishTime string) (result Result) {
+func (s *StockApi) GetStockClear(stockCode string, startTime string, finishTime string) *Result {
 	ss := getStockService(s.app)
 	cstats, err := ss.GetStockClear(stockCode, startTime, finishTime)
 	if err != nil {
-		handleError(err, &result)
-		return
+		return Failure(err)
 	}
-	result.Data = cstats
-	return
+	return Success(cstats)
 }
 
 func getStockService(app *container.App) *stock.StockService {
