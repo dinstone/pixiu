@@ -87,8 +87,14 @@ function openClearHistory() {
 }
 
 function openMarketData() {
-  const siteUrl = `https://xueqiu.com/S/${props.currentStock.code}`
-  router.push({ name: 'GoToSite', query: { site: siteUrl } })
+  let stockUrl = 'https://gushitong.baidu.com/stock/'
+  if (props.currentStock.market === 'H股') {
+    stockUrl += `hk-${props.currentStock.code}`
+  }
+  else {
+    stockUrl += `ab-${props.currentStock.code}`
+  }
+  router.push({ name: 'GoToSite', query: { site: stockUrl } })
 }
 
 const holding = ref({})
