@@ -2,9 +2,9 @@ package ipc
 
 import (
 	"pixiu/backend/business/uaac"
-	"pixiu/backend/container"
 	"pixiu/backend/pkg/exception"
 	"pixiu/backend/pkg/utils"
+	"pixiu/backend/runtime/container"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )

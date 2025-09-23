@@ -2,7 +2,7 @@ package ipc
 
 import (
 	"pixiu/backend/business/stock"
-	"pixiu/backend/container"
+	"pixiu/backend/runtime/container"
 )
 
 type StockApi struct {

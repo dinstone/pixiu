@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"pixiu/backend/adapter/ipc"
-	"pixiu/backend/container"
+	"pixiu/backend/runtime/container"
 	"runtime"
 
 	"github.com/wailsapp/wails/v2"

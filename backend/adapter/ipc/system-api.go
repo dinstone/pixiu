@@ -2,7 +2,7 @@ package ipc
 
 import (
 	"pixiu/backend/business/system"
-	"pixiu/backend/container"
+	"pixiu/backend/runtime/container"
 )
 
 type SystemApi struct {
