@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"path/filepath"
 	"pixiu/backend/adapter/dao"
@@ -13,6 +14,7 @@ import (
 	"pixiu/backend/pkg/gormer"
 	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/pkg/utils"
+	"strings"
 	"time"
 
 	"github.com/vrischmann/userdir"
@@ -190,4 +192,36 @@ func loopWindowEvent(ctx context.Context) {
 			})
 		}
 	}
+}
+
+func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	path := req.URL.Path
+
+	if len(path) > len("/avatar/") && path[:len("/avatar/")] == "/avatar/" {
+		avatorFile := path[len("/avatar/"):]
+		dotIndex := strings.Index(avatorFile, ".")
+		if dotIndex != -1 {
+			avatorFile = avatorFile[:dotIndex]
+		}
+
+		// 构造本地文件路径（如 ./uploads/avatars/admin.png）
+		localPath := filepath.Join(userdir.GetConfigHome(), constant.AppCode, "avatars", avatorFile)
+		if _, err := os.Stat(localPath); os.IsNotExist(err) {
+			http.NotFound(res, req)
+			return
+		}
+
+		// 读取并返回文件内容
+		fileData, err := os.ReadFile(localPath)
+		if err != nil {
+			http.Error(res, "文件读取失败", http.StatusInternalServerError)
+			return
+		}
+		// 设置响应头（图片类型）
+		res.Header().Set("Content-Type", "image/webp")
+		res.Write(fileData)
+	}
+
+	// 3. 其他路径返回 404
+	http.NotFound(res, req)
 }

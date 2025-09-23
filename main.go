@@ -51,7 +51,8 @@ func main() {
 		LogLevel:         logger.INFO,
 		WindowStartState: options.Maximised,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets:  assets,
+			Handler: app,
 		},
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 1},
 		StartHidden:      true,

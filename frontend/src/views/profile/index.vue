@@ -10,7 +10,7 @@
   <AppPage show-footer>
     <n-card title="账户信息">
       <n-space align="center">
-        <n-avatar round :size="100" :src="userStore.avatar" />
+        <n-avatar round :size="100" :src="userStore.avatar" class="cursor-pointer" @click="updateAvatar" />
         <div class="ml-20">
           <div class="flex items-center text-16">
             <span>用户名:</span>
@@ -21,12 +21,7 @@
             </n-button>
           </div>
           <div class="mt-16 flex items-center">
-            <n-button type="primary" ghost @click="avatarModalRef.open()">
-              更改头像
-            </n-button>
-            <span class="ml-12 opacity-60">
-              修改头像只支持在线链接，不提供上传图片功能！
-            </span>
+            <span>点击头像可更换头像</span>
           </div>
         </div>
       </n-space>
@@ -123,6 +118,14 @@ async function handlePwdSave() {
   await api.changePassword(pwdForm.value)
   $message.success('密码修改成功')
   refreshUserInfo()
+}
+
+async function updateAvatar() {
+  const res = await api.updateAvator()
+  if (res.data === 'OK') {
+    $message.success('头像修改成功')
+    refreshUserInfo()
+  }
 }
 
 const newAvatar = ref(userStore.avatar)
