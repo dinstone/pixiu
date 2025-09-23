@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"pixiu/backend/pkg/gormer"
 	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/pkg/utils"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +28,10 @@ import (
 // App struct
 type App struct {
 	ctx context.Context
+
+	env runtime.EnvironmentInfo
+
+	acd string // app config directory
 
 	gdb *gorm.DB
 
@@ -54,6 +60,10 @@ func (a *App) Context() context.Context {
 	return a.ctx
 }
 
+func (a *App) ConfigHome() string {
+	return a.acd
+}
+
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) Startup(ctx context.Context) {
@@ -62,20 +72,26 @@ func (a *App) Startup(ctx context.Context) {
 	// setup logger
 	logger := slf4g.Setup(ctx)
 
-	gcf := loadConfig()
-	logger.Info("sqlite db config: %+v", gcf)
-
-	ei := runtime.Environment(ctx)
-	if ei.BuildType != "dev" {
-		gcf.Dsn = filepath.Join(userdir.GetConfigHome(), constant.AppCode, gcf.Dsn)
-	} else {
+	// setup config home
+	a.env = runtime.Environment(ctx)
+	if a.env.BuildType == "dev" {
 		wd, err := os.Getwd()
 		if err != nil {
 			panic(err)
 		}
-		gcf.Dsn = filepath.Join(wd, gcf.Dsn)
+		a.acd = filepath.Join(wd, constant.AppCode)
+	} else {
+		a.acd = filepath.Join(userdir.GetConfigHome(), constant.AppCode)
 	}
-	logger.Info("sqlite db dir is %s", gcf.Dsn)
+	// make directory
+	if _, err := os.Stat(a.acd); os.IsNotExist(err) {
+		if err := os.MkdirAll(a.acd, 0755); err != nil {
+			panic(err)
+		}
+	}
+
+	gcf := loadSqliteConfig(a.acd)
+	logger.Info("sqlite db config: %+v", gcf)
 
 	gdb, err := dao.NewGormDB(gcf)
 	if err != nil {
@@ -108,7 +124,7 @@ func (a *App) Startup(ctx context.Context) {
 	a.svs["UaacService"] = uacs
 	a.svs["StockService"] = ss
 
-	pls := storage.NewLocalStorage(constant.AppCode, "preferences.yaml")
+	pls := storage.NewLocalStorage(a.acd, "preferences.yaml")
 	pss := system.NewSystemService(pls)
 	a.svs["SystemService"] = pss
 
@@ -129,9 +145,10 @@ func (a *App) Shutdown(ctx context.Context) {
 	}
 }
 
-func loadConfig() *dao.SqliteConfig {
+func loadSqliteConfig(acd string) *dao.SqliteConfig {
+	dsn := filepath.Join(acd, "stock.db?cache=shared&mode=rw")
 	return &dao.SqliteConfig{
-		Dsn:          "stock.db?cache=shared&mode=rw",
+		Dsn:          dsn,
 		LogMode:      "info",
 		LogZap:       false,
 		MaxIdleConns: 1,
@@ -197,6 +214,7 @@ func loopWindowEvent(ctx context.Context) {
 func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 
+	// 拦截 /avatar/{userId}.{timestamp} 请求
 	if len(path) > len("/avatar/") && path[:len("/avatar/")] == "/avatar/" {
 		avatorFile := path[len("/avatar/"):]
 		dotIndex := strings.Index(avatorFile, ".")
@@ -204,24 +222,54 @@ func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			avatorFile = avatorFile[:dotIndex]
 		}
 
-		// 构造本地文件路径（如 ./uploads/avatars/admin.png）
-		localPath := filepath.Join(userdir.GetConfigHome(), constant.AppCode, "avatars", avatorFile)
-		if _, err := os.Stat(localPath); os.IsNotExist(err) {
-			http.NotFound(res, req)
+		fileData, err := a.LoadAvatorFile(avatorFile)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// 读取并返回文件内容
-		fileData, err := os.ReadFile(localPath)
-		if err != nil {
-			http.Error(res, "文件读取失败", http.StatusInternalServerError)
-			return
-		}
 		// 设置响应头（图片类型）
 		res.Header().Set("Content-Type", "image/webp")
 		res.Write(fileData)
+		return
 	}
 
 	// 3. 其他路径返回 404
 	http.NotFound(res, req)
+}
+
+func (a *App) LoadAvatorFile(avatorFile string) ([]byte, error) {
+	localPath := filepath.Join(a.acd, "avatars", avatorFile)
+	if _, err := os.Stat(localPath); os.IsNotExist(err) {
+		return nil, err
+	}
+
+	// 读取并返回文件内容
+	return os.ReadFile(localPath)
+}
+
+func (a *App) SaveAvatorFile(filePath string, userId string) (string, error) {
+	// 1. 创建本地上传目录（若不存在）
+	uploadDir := filepath.Join(a.acd, "avatars")
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(uploadDir, 0755); err != nil {
+			return "", fmt.Errorf("创建上传目录失败: %v", err)
+		}
+	}
+
+	// 2. 读取文件内容
+	fileData, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("读取文件失败: %v", err)
+	}
+
+	// 3. 保存文件至本地目录（以用户ID命名）
+	savePath := filepath.Join(uploadDir, userId)
+	if err := os.WriteFile(savePath, fileData, 0644); err != nil {
+		return "", fmt.Errorf("保存文件失败: %v", err)
+	}
+
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	avatorPath := "/avatar/" + userId + "." + timestamp
+	return avatorPath, nil
 }

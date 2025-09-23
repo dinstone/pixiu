@@ -12,7 +12,7 @@
   <div class="mb-10">
     <UserAvatar />
   </div>
-  <SettingMenu class="mb-10"/>
+  <SettingMenu class="mb-10" />
 </template>
 
 <script setup>

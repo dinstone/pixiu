@@ -3,8 +3,6 @@ package storage
 import (
 	"os"
 	"path"
-
-	"github.com/vrischmann/userdir"
 )
 
 // LocalStorage provides reading and writing application data to the user's
@@ -16,7 +14,7 @@ type LocalStorage struct {
 // NewLocalStorage returns a localStore instance.
 func NewLocalStorage(parentdir string, filename string) *LocalStorage {
 	return &LocalStorage{
-		ConfPath: path.Join(userdir.GetConfigHome(), parentdir, filename),
+		ConfPath: path.Join(parentdir, filename),
 	}
 }
 
