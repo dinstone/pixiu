@@ -1,0 +1,89 @@
+name: Build and Release Pixiu for Windows & macOS
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当你 push 如 v1.0.0, v0.1.2 等 tag 时触发
+
+jobs:
+  build-and-release:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        # 我们实际只发布 Windows 和 macOS，但可以保留 ubuntu 以备将来 Linux 支持
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'  # 根据你的 go.mod 调整，建议 >=1.20
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'  # 推荐 16/18/20，根据你的前端要求
+
+      - name: Install Frontend Dependencies & Build
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+        if: matrix.os != 'windows-latest'  # 通常前端构建脚本跨平台，但可按需调整
+
+      - name: Build Wails Application
+        env:
+          GOOS: ${{ matrix.os == 'windows-latest' && 'windows' || matrix.os == 'macos-latest' && 'darwin' || 'linux' }}
+          GOARCH: 'amd64'
+        run: |
+          wails build -ldflags="-s -w" -clean
+
+      - name: Package Build Artifacts
+        id: package
+        run: |
+          mkdir -p packaged
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Windows: 通常是 build/*.exe
+            cp build/*.exe packaged/pixiu-windows-amd64.exe
+            cd packaged
+            zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
+            echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # macOS: 通常是 build/Pixiu.app 或 build/pixiu（二进制）
+            # Wails 默认输出可能是 build/pixiu（二进制）或 build/Pixiu.app
+            # 请根据你实际项目输出情况调整，下面是常见情况
+            if [ -f "build/pixiu" ]; then
+              cp build/pixiu packaged/pixiu-macos-amd64
+              cd packaged
+              tar -czvf pixiu-macos-amd64.tar.gz pixiu-macos-amd64
+              echo "ASSET=pixiu-macos-amd64.tar.gz" >> $GITHUB_OUTPUT
+            elif [ -d "build/Pixiu.app" ]; then
+              cp -r build/Pixiu.app packaged/Pixiu.app
+              cd packaged
+              tar -czvf Pixiu.app.tar.gz Pixiu.app
+              echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
+            else
+              echo "❌ 未找到 macOS 可执行文件或 .app 包，请检查 build/ 目录"
+              exit 1
+            fi
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            # 可选：Linux 支持，如有需要可扩展
+            echo "🔧 Linux 构建暂未处理，如需请补充"
+            exit 0
+          else
+            echo "❌ 不支持的操作系统: ${{ matrix.os }}"
+            exit 1
+          fi
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            ${{ steps.package.outputs.ASSET }}
+          draft: false
+          prerelease: false
