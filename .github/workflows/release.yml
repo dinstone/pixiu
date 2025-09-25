@@ -52,8 +52,9 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             # Windows
-            if [ -f "build/bin/*.exe" ]; then
-              cp build/bin/*.exe pixiu-windows-amd64.exe
+            if [ -f "build/bin/PixiuSIM.exe" ]; then
+              echo "✅ 找到 Windows 可执行文件：build/bin/PixiuSIM.exe"
+              cp build/bin/PixiuSIM.exe pixiu-windows-amd64.exe
               zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
               echo "✅ 打包完成: pixiu-windows-amd64.zip"
               echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
