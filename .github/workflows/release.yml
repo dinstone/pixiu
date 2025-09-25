@@ -48,6 +48,7 @@ jobs:
 
       - name: Package Build Artifacts
         id: package
+        shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             # Windows
@@ -55,21 +56,24 @@ jobs:
               cp build/bin/*.exe pixiu-windows-amd64.exe
               zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
               echo "✅ 打包完成: pixiu-windows-amd64.zip"
+              echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
             else
               echo "❌ 未找到 Windows 可执行文件 (*.exe)，请检查 build/ 目录"
               exit 1
             fi
 
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            # macOS
+            # MacOS
             if [ -d "build/bin/Pixiu.app" ]; then
               echo "✅ 找到 macOS 应用包：build/bin/Pixiu.app"
               tar -czvf Pixiu.app.tar.gz -C build/bin Pixiu.app
               echo "✅ 打包完成: Pixiu.app.tar.gz"
+              echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
             elif [ -d "build/Pixiu.app" ]; then
               echo "✅ 找到 macOS 应用包：build/Pixiu.app"
               tar -czvf Pixiu.app.tar.gz -C build/ Pixiu.app
               echo "✅ 打包完成: Pixiu.app.tar.gz"
+              echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
             else
               echo "❌ 未找到 macOS .app 包。请检查以下路径是否存在："
               echo "  - build/bin/Pixiu.app"
@@ -92,7 +96,6 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           files: |
-            pixiu-windows-amd64.zip   # Windows 输出
-            Pixiu.app.tar.gz          # macOS 输出
+            ${{ steps.package.outputs.ASSET }}
           draft: false
           prerelease: false
