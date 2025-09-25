@@ -49,15 +49,12 @@ jobs:
       - name: Package Build Artifacts
         id: package
         run: |
-          mkdir -p packaged
-
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             # Windows
             if [ -f "build/bin/*.exe" ]; then
-              cp build/bin/*.exe packaged/pixiu-windows-amd64.exe
-              cd packaged
+              cp build/bin/*.exe pixiu-windows-amd64.exe
               zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
-              echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
+              echo "✅ 打包完成: pixiu-windows-amd64.zip"
             else
               echo "❌ 未找到 Windows 可执行文件 (*.exe)，请检查 build/ 目录"
               exit 1
@@ -67,16 +64,12 @@ jobs:
             # macOS
             if [ -d "build/bin/Pixiu.app" ]; then
               echo "✅ 找到 macOS 应用包：build/bin/Pixiu.app"
-              cp -r build/bin/Pixiu.app packaged/Pixiu.app
-              cd packaged
-              tar -czvf Pixiu.app.tar.gz Pixiu.app
-              echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
+              tar -czvf Pixiu.app.tar.gz -C build/bin Pixiu.app
+              echo "✅ 打包完成: Pixiu.app.tar.gz"
             elif [ -d "build/Pixiu.app" ]; then
-              # 备选：如果你的 app 包直接在 build/Pixiu.app（不太常见）
-              cp -r build/Pixiu.app packaged/Pixiu.app
-              cd packaged
-              tar -czvf Pixiu.app.tar.gz Pixiu.app
-              echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
+              echo "✅ 找到 macOS 应用包：build/Pixiu.app"
+              tar -czvf Pixiu.app.tar.gz -C build/ Pixiu.app
+              echo "✅ 打包完成: Pixiu.app.tar.gz"
             else
               echo "❌ 未找到 macOS .app 包。请检查以下路径是否存在："
               echo "  - build/bin/Pixiu.app"
@@ -97,7 +90,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/v')
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           files: |
-            ${{ steps.package.outputs.ASSET }}
+            pixiu-windows-amd64.zip   # Windows 输出
+            Pixiu.app.tar.gz          # macOS 输出
           draft: false
           prerelease: false
