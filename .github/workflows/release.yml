@@ -50,33 +50,43 @@ jobs:
         id: package
         run: |
           mkdir -p packaged
+
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            # Windows: 通常是 build/*.exe
-            cp build/*.exe packaged/pixiu-windows-amd64.exe
-            cd packaged
-            zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
-            echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            # macOS: 通常是 build/Pixiu.app 或 build/pixiu（二进制）
-            # Wails 默认输出可能是 build/pixiu（二进制）或 build/Pixiu.app
-            # 请根据你实际项目输出情况调整，下面是常见情况
-            if [ -f "build/pixiu" ]; then
-              cp build/pixiu packaged/pixiu-macos-amd64
+            # Windows
+            if [ -f "build/bin/*.exe" ]; then
+              cp build/bin/*.exe packaged/pixiu-windows-amd64.exe
               cd packaged
-              tar -czvf pixiu-macos-amd64.tar.gz pixiu-macos-amd64
-              echo "ASSET=pixiu-macos-amd64.tar.gz" >> $GITHUB_OUTPUT
+              zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
+              echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
+            else
+              echo "❌ 未找到 Windows 可执行文件 (*.exe)，请检查 build/ 目录"
+              exit 1
+            fi
+
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            # macOS
+            if [ -d "build/bin/Pixiu.app" ]; then
+              echo "✅ 找到 macOS 应用包：build/bin/Pixiu.app"
+              cp -r build/bin/Pixiu.app packaged/Pixiu.app
+              cd packaged
+              tar -czvf Pixiu.app.tar.gz Pixiu.app
+              echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
             elif [ -d "build/Pixiu.app" ]; then
+              # 备选：如果你的 app 包直接在 build/Pixiu.app（不太常见）
               cp -r build/Pixiu.app packaged/Pixiu.app
               cd packaged
               tar -czvf Pixiu.app.tar.gz Pixiu.app
               echo "ASSET=Pixiu.app.tar.gz" >> $GITHUB_OUTPUT
             else
-              echo "❌ 未找到 macOS 可执行文件或 .app 包，请检查 build/ 目录"
+              echo "❌ 未找到 macOS .app 包。请检查以下路径是否存在："
+              echo "  - build/bin/Pixiu.app"
+              echo "  - build/Pixiu.app"
+              ls -R build/
               exit 1
             fi
+
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            # 可选：Linux 支持，如有需要可扩展
-            echo "🔧 Linux 构建暂未处理，如需请补充"
+            echo "🔧 Linux 构建暂未处理"
             exit 0
           else
             echo "❌ 不支持的操作系统: ${{ matrix.os }}"
