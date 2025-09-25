@@ -3,6 +3,7 @@ package uaac
 import (
 	"pixiu/backend/pkg/exception"
 	"pixiu/backend/pkg/gormer"
+	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/pkg/utils"
 )
 
@@ -49,6 +50,9 @@ func (us *UaacService) AuthenAccessToken(username string, token string) error {
 	if username == "" || token == "" {
 		return exception.NewBusiness(404, "用户名和访问令牌不能为空")
 	}
+
+	slf4g.R().Debug("AuthenAccessToken %s", token)
+
 	jwt := utils.NewJWT()
 	claims, err := jwt.ParseToken(token)
 	if err != nil {

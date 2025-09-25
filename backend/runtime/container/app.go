@@ -15,6 +15,7 @@ import (
 	"pixiu/backend/pkg/gormer"
 	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/pkg/utils"
+	"pixiu/backend/runtime/zaplog"
 	"strconv"
 	"strings"
 	"time"
@@ -69,11 +70,8 @@ func (a *App) ConfigHome() string {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
-	// setup logger
-	logger := slf4g.Setup(ctx)
-
-	// setup config home
 	a.env = runtime.Environment(ctx)
+	// setup config home
 	if a.env.BuildType == "dev" {
 		wd, err := os.Getwd()
 		if err != nil {
@@ -89,6 +87,9 @@ func (a *App) Startup(ctx context.Context) {
 			panic(err)
 		}
 	}
+
+	// setup logger
+	logger := setupLogger(a.env.BuildType, a.acd)
 
 	gcf := loadSqliteConfig(a.acd)
 	logger.Info("sqlite db config: %+v", gcf)
@@ -132,6 +133,50 @@ func (a *App) Startup(ctx context.Context) {
 	go loopWindowEvent(ctx)
 }
 
+func setupLogger(bt string, chd string) slf4g.Logger {
+	ld := filepath.Join(chd, "logs")
+	if bt == "dev" {
+		hc := zaplog.HandlerConfig{
+			Name:  "console-handler",
+			Type:  "console",
+			Level: "debug",
+		}
+		fc := zaplog.HandlerConfig{
+			Name:     "file-handler",
+			Type:     "file",
+			Level:    "debug",
+			LogDir:   ld,
+			MaxAge:   2,
+			FileName: "app.log",
+		}
+		rl := zaplog.LoggerConfig{
+			Name:     "root",
+			Level:    "debug",
+			ShowLine: true,
+			Handlers: []string{"console-handler", "file-handler"},
+		}
+		zaplog.Setup(zaplog.ZapConfig{Loggers: []zaplog.LoggerConfig{rl}, Handlers: []zaplog.HandlerConfig{hc, fc}})
+	} else {
+		fc := zaplog.HandlerConfig{
+			Name:     "file-handler",
+			Type:     "file",
+			Level:    "debug",
+			LogDir:   ld,
+			MaxAge:   2,
+			FileName: "app.log",
+		}
+		rl := zaplog.LoggerConfig{
+			Name:     "root",
+			Level:    "info",
+			ShowLine: true,
+			Handlers: []string{"file-handler"},
+		}
+		zaplog.Setup(zaplog.ZapConfig{Loggers: []zaplog.LoggerConfig{rl}, Handlers: []zaplog.HandlerConfig{fc}})
+	}
+
+	return slf4g.R()
+}
+
 // This is called just after the front-end dom has been completely rendered
 func (a *App) DomReady(ctx context.Context) {
 	runtime.WindowShow(ctx)
@@ -143,6 +188,8 @@ func (a *App) Shutdown(ctx context.Context) {
 	if err != nil {
 		db.Close()
 	}
+
+	slf4g.Sync()
 }
 
 func loadSqliteConfig(acd string) *dao.SqliteConfig {

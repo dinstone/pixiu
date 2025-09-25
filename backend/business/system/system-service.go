@@ -96,7 +96,7 @@ func (p *SystemService) UpdatePreferences(values map[string]any) error {
 			return err
 		}
 	}
-	slf4g.Get().Info("after save %v", pf)
+	slf4g.R().Info("after save %v", pf)
 
 	return p.savePreferences(&pf)
 }
