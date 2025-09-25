@@ -28,13 +28,6 @@ jobs:
         with:
           node-version: '22'  # 推荐 16/18/20，根据你的前端要求
 
-      - name: Install Frontend Dependencies & Build
-        working-directory: ./frontend
-        run: |
-          npm install
-          npm run build
-        if: matrix.os != 'windows-latest'  # 通常前端构建脚本跨平台，但可按需调整
-
       - name: Build Wails Application
         env:
           GOOS: ${{ matrix.os == 'windows-latest' && 'windows' || matrix.os == 'macos-latest' && 'darwin' || 'linux' }}
