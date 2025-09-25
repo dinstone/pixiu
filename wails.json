@@ -6,6 +6,9 @@
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
+  "build": {
+    "ldflags": "-s -w"
+  },
   "author": {
     "name": "dinstone",
     "email": "dinstone@163.com"
@@ -15,6 +18,6 @@
     "productName": "Pixiu SIM",
     "productVersion": "1.0.0",
     "copyright": "Copyright © 2025",
-    "comments": "PiXiu Stock Investment Mangement System"
+    "comments": "Pixiu Stock Investment Mangement System"
   }
 }

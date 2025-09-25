@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	"golang.org/x/sync/singleflight"
 )
 
 type CustomClaims struct {
@@ -53,15 +52,6 @@ func (j *JWT) CreateClaims(baseClaims BaseClaims) CustomClaims {
 func (j *JWT) CreateToken(claims CustomClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(j.SigningKey)
-}
-
-// CreateTokenByOldToken 旧token 换新token 使用归并回源避免并发问题
-func (j *JWT) CreateTokenByOldToken(oldToken string, claims CustomClaims) (string, error) {
-	control := &singleflight.Group{}
-	v, err, _ := control.Do("JWT:"+oldToken, func() (interface{}, error) {
-		return j.CreateToken(claims)
-	})
-	return v.(string), err
 }
 
 // ParseToken 解析 token

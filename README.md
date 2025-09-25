@@ -19,3 +19,6 @@ to this in your browser, and you can call your Go code from devtools.
 ## Building
 
 To build a redistributable, production mode package, use `wails build`.
+
+## wails 应用图标制作
+选择在线制作AppIcon，下载AppIcon.icns文件后，打开文件，抽取其中的一张图标，保存为appicon.png即可。
