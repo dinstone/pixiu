@@ -55,7 +55,7 @@ jobs:
             if [ -f "build/bin/PixiuSIM.exe" ]; then
               echo "✅ 找到 Windows 可执行文件：build/bin/PixiuSIM.exe"
               cp build/bin/PixiuSIM.exe pixiu-windows-amd64.exe
-              zip -r pixiu-windows-amd64.zip pixiu-windows-amd64.exe
+              powershell -Command "Compress-Archive -Path pixiu-windows-amd64.exe -DestinationPath pixiu-windows-amd64.zip"
               echo "✅ 打包完成: pixiu-windows-amd64.zip"
               echo "ASSET=pixiu-windows-amd64.zip" >> $GITHUB_OUTPUT
             else
