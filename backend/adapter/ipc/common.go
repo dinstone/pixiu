@@ -5,6 +5,11 @@ import (
 	"pixiu/backend/pkg/exception"
 )
 
+type LifeCycle interface {
+	Start()
+	Close()
+}
+
 type Result struct {
 	Code int    `json:"code"`
 	Mesg string `json:"mesg"`

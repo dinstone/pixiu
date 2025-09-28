@@ -1,26 +1,34 @@
 package ipc
 
 import (
+	"pixiu/backend/adapter/container"
 	"pixiu/backend/business/system"
 	"pixiu/backend/pkg/slf4g"
-	"pixiu/backend/runtime/container"
 )
 
 type SystemApi struct {
-	app *container.App
+	ac container.Container
+	ss *system.SystemService
 }
 
-func NewSystemApi(app *container.App) *SystemApi {
-	return &SystemApi{app}
+func NewSystemApi(c container.Container) *SystemApi {
+	return &SystemApi{ac: c}
+}
+
+func (sa *SystemApi) Start() {
+	sa.ss = sa.ac.GetComponent("SystemService").(*system.SystemService)
+}
+
+func (sa *SystemApi) Close() {
+
 }
 
 func (sa *SystemApi) GetAppInfo() *Result {
-	return Success(sa.app.Info)
+	return Success(sa.ac.AppInfo())
 }
 
 func (sa *SystemApi) CheckForUpdate() *Result {
-	ps := getSystemService(sa.app)
-	u, err := ps.GetLatestUpdate(sa.app.Info.Version)
+	u, err := sa.ss.GetLatestUpdate(sa.ac.AppInfo().Version)
 	if err != nil {
 		slf4g.R().Warn("check update failed, %s", err)
 		return Failure(err)
@@ -28,29 +36,22 @@ func (sa *SystemApi) CheckForUpdate() *Result {
 	return Success(u)
 }
 
-func (p *SystemApi) GetPreferences() *Result {
-	ps := getSystemService(p.app)
-	return Success(ps.GetPreferences())
+func (sa *SystemApi) GetPreferences() *Result {
+	return Success(sa.ss.GetPreferences())
 }
 
-func (p *SystemApi) SetPreferences(pf *system.Preferences) (ret Result) {
-	ps := getSystemService(p.app)
-	if err := ps.SetPreferences(pf); err != nil {
+func (sa *SystemApi) SetPreferences(pf *system.Preferences) (ret Result) {
+	if err := sa.ss.SetPreferences(pf); err != nil {
 		ret.Code = 500
 		ret.Mesg = err.Error()
 	}
 	return
 }
 
-func (p *SystemApi) UpdatePreferences(values map[string]any) (ret Result) {
-	ps := getSystemService(p.app)
-	if err := ps.UpdatePreferences(values); err != nil {
+func (sa *SystemApi) UpdatePreferences(values map[string]any) (ret Result) {
+	if err := sa.ss.UpdatePreferences(values); err != nil {
 		ret.Code = 500
 		ret.Mesg = err.Error()
 	}
 	return
-}
-
-func getSystemService(app *container.App) *system.SystemService {
-	return app.Service("SystemService").(*system.SystemService)
 }

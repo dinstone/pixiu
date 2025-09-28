@@ -1,12 +1,12 @@
-package container
+package engine
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"pixiu/backend/adapter/dao"
+	"pixiu/backend/adapter/ipc"
 	"pixiu/backend/adapter/storage"
 	"pixiu/backend/business/stock"
 	"pixiu/backend/business/system"
@@ -16,9 +16,7 @@ import (
 	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/pkg/utils"
 	"pixiu/backend/runtime/zaplog"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/vrischmann/userdir"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -26,8 +24,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// App struct
-type App struct {
+// App Engine is a Container
+type AppEngine struct {
 	ctx context.Context
 
 	env runtime.EnvironmentInfo
@@ -36,13 +34,15 @@ type App struct {
 
 	gdb *gorm.DB
 
-	svs map[string]interface{}
+	lcs []ipc.LifeCycle
 
-	Info system.AppInfo
+	ncmap map[string]interface{} // named component map
+
+	appInfo system.AppInfo
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
+// NewAppEngine creates a new AppEngine struct
+func NewAppEngine() *AppEngine {
 	info := system.AppInfo{
 		AppName:   constant.AppName,
 		AppCode:   constant.AppCode,
@@ -50,24 +50,45 @@ func NewApp() *App {
 		Comments:  "A modern lightweight cross-platform desktop system.",
 		Copyright: "Copyright © 2025 dinstone all rights reserved",
 	}
-	return &App{svs: make(map[string]interface{}), Info: info}
+
+	ae := &AppEngine{ncmap: make(map[string]interface{}), appInfo: info}
+
+	uapi := ipc.NewUaacApi(ae)
+	sapi := ipc.NewStockApi(ae)
+	papi := ipc.NewSystemApi(ae)
+	ae.lcs = append(ae.lcs, uapi, sapi, papi)
+
+	return ae
 }
 
-func (a *App) Service(name string) interface{} {
-	return a.svs[name]
+func (a *AppEngine) AppInfo() *system.AppInfo {
+	return &a.appInfo
 }
 
-func (a *App) Context() context.Context {
+func (a *AppEngine) GetComponent(name string) interface{} {
+	return a.ncmap[name]
+}
+
+func (a *AppEngine) WailsContext() context.Context {
 	return a.ctx
 }
 
-func (a *App) ConfigHome() string {
+func (a *AppEngine) ConfigHome() string {
 	return a.acd
+}
+
+func (a *AppEngine) BindAPI() []interface{} {
+	binds := make([]interface{}, len(a.lcs))
+	for i, v := range a.lcs {
+		binds[i] = v
+	}
+
+	return binds
 }
 
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
-func (a *App) Startup(ctx context.Context) {
+func (a *AppEngine) Startup(ctx context.Context) {
 	a.ctx = ctx
 
 	a.env = runtime.Environment(ctx)
@@ -122,15 +143,19 @@ func (a *App) Startup(ctx context.Context) {
 	gormer := gormer.NewGormer(gdb)
 	uacs := uaac.NewUaacService(gormer, dao.NewUaacDao(gormer))
 	ss := stock.NewStockService(gormer, dao.NewStockDao(gormer))
-	a.svs["UaacService"] = uacs
-	a.svs["StockService"] = ss
+	a.ncmap["UaacService"] = uacs
+	a.ncmap["StockService"] = ss
 
 	pls := storage.NewLocalStorage(a.acd, "preferences.yaml")
 	pss := system.NewSystemService(pls)
-	a.svs["SystemService"] = pss
+	a.ncmap["SystemService"] = pss
 
-	// start window event
-	go loopWindowEvent(ctx)
+	a.ncmap["AvatorStorage"] = storage.NewAvatorStorage(a.acd)
+
+	for _, v := range a.lcs {
+		v.Start()
+	}
+
 }
 
 func setupLogger(bt string, chd string) slf4g.Logger {
@@ -178,11 +203,15 @@ func setupLogger(bt string, chd string) slf4g.Logger {
 }
 
 // This is called just after the front-end dom has been completely rendered
-func (a *App) DomReady(ctx context.Context) {
+func (a *AppEngine) DomReady(ctx context.Context) {
 	runtime.WindowShow(ctx)
 }
 
-func (a *App) Shutdown(ctx context.Context) {
+func (a *AppEngine) Shutdown(ctx context.Context) {
+	for _, v := range a.lcs {
+		v.Close()
+	}
+
 	// close db
 	db, err := a.gdb.DB()
 	if err != nil {
@@ -207,58 +236,7 @@ func loadSqliteConfig(acd string) *dao.SqliteConfig {
 
 }
 
-func loopWindowEvent(ctx context.Context) {
-	var fullscreen, maximised, minimised, normal bool
-	var width, height int
-	var dirty bool
-	for {
-		time.Sleep(300 * time.Millisecond)
-		if ctx == nil {
-			continue
-		}
-
-		dirty = false
-		if f := runtime.WindowIsFullscreen(ctx); f != fullscreen {
-			// full-screen switched
-			fullscreen = f
-			dirty = true
-		}
-
-		if w, h := runtime.WindowGetSize(ctx); w != width || h != height {
-			// window size changed
-			width, height = w, h
-			dirty = true
-		}
-
-		if m := runtime.WindowIsMaximised(ctx); m != maximised {
-			maximised = m
-			dirty = true
-		}
-
-		if m := runtime.WindowIsMinimised(ctx); m != minimised {
-			minimised = m
-			dirty = true
-		}
-
-		if n := runtime.WindowIsNormal(ctx); n != normal {
-			normal = n
-			dirty = true
-		}
-
-		if dirty {
-			runtime.EventsEmit(ctx, "window_changed", map[string]any{
-				"fullscreen": fullscreen,
-				"width":      width,
-				"height":     height,
-				"maximised":  maximised,
-				"minimised":  minimised,
-				"normal":     normal,
-			})
-		}
-	}
-}
-
-func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func (a *AppEngine) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 
 	// 拦截 /avatar/{userId}.{timestamp} 请求
@@ -269,7 +247,8 @@ func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 			avatorFile = avatorFile[:dotIndex]
 		}
 
-		fileData, err := a.LoadAvatorFile(avatorFile)
+		storage := a.GetComponent("AvatorStorage").(*storage.AvatorStorage)
+		fileData, err := storage.LoadAvatorFile(avatorFile)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			return
@@ -283,40 +262,4 @@ func (a *App) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// 3. 其他路径返回 404
 	http.NotFound(res, req)
-}
-
-func (a *App) LoadAvatorFile(avatorFile string) ([]byte, error) {
-	localPath := filepath.Join(a.acd, "avatars", avatorFile)
-	if _, err := os.Stat(localPath); os.IsNotExist(err) {
-		return nil, err
-	}
-
-	// 读取并返回文件内容
-	return os.ReadFile(localPath)
-}
-
-func (a *App) SaveAvatorFile(filePath string, userId string) (string, error) {
-	// 1. 创建本地上传目录（若不存在）
-	uploadDir := filepath.Join(a.acd, "avatars")
-	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(uploadDir, 0755); err != nil {
-			return "", fmt.Errorf("创建上传目录失败: %v", err)
-		}
-	}
-
-	// 2. 读取文件内容
-	fileData, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", fmt.Errorf("读取文件失败: %v", err)
-	}
-
-	// 3. 保存文件至本地目录（以用户ID命名）
-	savePath := filepath.Join(uploadDir, userId)
-	if err := os.WriteFile(savePath, fileData, 0644); err != nil {
-		return "", fmt.Errorf("保存文件失败: %v", err)
-	}
-
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	avatorPath := "/avatar/" + userId + "." + timestamp
-	return avatorPath, nil
 }

@@ -1,22 +1,32 @@
 package ipc
 
 import (
+	"pixiu/backend/adapter/container"
+	"pixiu/backend/adapter/storage"
 	"pixiu/backend/business/uaac"
 	"pixiu/backend/pkg/exception"
 	"pixiu/backend/pkg/utils"
-	"pixiu/backend/runtime/container"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type UaacApi struct {
-	app *container.App
+	ac container.Container
+	us *uaac.UaacService
 }
 
-func NewUaacApi(app *container.App) *UaacApi {
+func NewUaacApi(c container.Container) *UaacApi {
 	return &UaacApi{
-		app: app,
+		ac: c,
 	}
+}
+
+func (u *UaacApi) Start() {
+	u.us = u.ac.GetComponent("UaacService").(*uaac.UaacService)
+}
+
+func (u *UaacApi) Close() {
+
 }
 
 func (u *UaacApi) GetUserDetail(token string) *Result {
@@ -25,7 +35,7 @@ func (u *UaacApi) GetUserDetail(token string) *Result {
 		return Failure(err)
 	}
 
-	ud, err := getUaacService(u.app).GetUserDetail(claims.Username)
+	ud, err := u.us.GetUserDetail(claims.Username)
 	if err != nil {
 		return Failure(err)
 	}
@@ -34,8 +44,7 @@ func (u *UaacApi) GetUserDetail(token string) *Result {
 }
 
 func (u *UaacApi) AuthenPassword(username string, password string) *Result {
-	service := getUaacService(u.app)
-	account, err := service.AuthenPassword(username, password)
+	account, err := u.us.AuthenPassword(username, password)
 	if err != nil {
 		return Failure(err)
 	}
@@ -71,8 +80,7 @@ func (u *UaacApi) UpdatePassword(token string, password string) *Result {
 		return Failure(err)
 	}
 
-	service := getUaacService(u.app)
-	err = service.UpdatePassword(claims.Username, password)
+	err = u.us.UpdatePassword(claims.Username, password)
 	if err != nil {
 		return Failure(err)
 	}
@@ -87,7 +95,7 @@ func (u *UaacApi) UpdateAvator(token string) *Result {
 	}
 
 	// select file
-	imgFile, err := runtime.OpenFileDialog(u.app.Context(), runtime.OpenDialogOptions{
+	imgFile, err := runtime.OpenFileDialog(u.ac.WailsContext(), runtime.OpenDialogOptions{
 		Title: "选择图片",
 		Filters: []runtime.FileFilter{{
 			DisplayName: "Images (*.png;*.jpg;*.jpeg;*.gif)",
@@ -102,7 +110,8 @@ func (u *UaacApi) UpdateAvator(token string) *Result {
 	if imgFile != "" {
 		// save file
 		userId := claims.Username
-		aurl, err := u.app.SaveAvatorFile(imgFile, userId)
+		as := u.ac.GetComponent("AvatorStorage").(*storage.AvatorStorage)
+		aurl, err := as.SaveAvatorFile(imgFile, userId)
 		if err != nil {
 			return Failure(err)
 		}
@@ -112,8 +121,7 @@ func (u *UaacApi) UpdateAvator(token string) *Result {
 			Username: userId,
 			Avatar:   aurl,
 		}
-		service := getUaacService(u.app)
-		err = service.UpdateProfile(profile)
+		err = u.us.UpdateProfile(profile)
 		if err != nil {
 			return Failure(err)
 		}
@@ -130,9 +138,8 @@ func (u *UaacApi) UpdateProfile(token string, profile *uaac.Profile) *Result {
 		return Failure(err)
 	}
 
-	service := getUaacService(u.app)
 	profile.Username = claims.Username
-	err = service.UpdateProfile(profile)
+	err = u.us.UpdateProfile(profile)
 	if err != nil {
 		return Failure(err)
 	}
@@ -151,8 +158,4 @@ func checkToken(token string) (*utils.CustomClaims, error) {
 	}
 
 	return claims, nil
-}
-
-func getUaacService(app *container.App) *uaac.UaacService {
-	return app.Service("UaacService").(*uaac.UaacService)
 }

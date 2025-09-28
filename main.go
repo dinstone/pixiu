@@ -3,8 +3,7 @@ package main
 import (
 	"embed"
 	"fmt"
-	"pixiu/backend/adapter/ipc"
-	"pixiu/backend/runtime/container"
+	"pixiu/backend/runtime/engine"
 	"runtime"
 
 	"github.com/wailsapp/wails/v2"
@@ -24,12 +23,12 @@ var assets embed.FS
 var icon []byte
 
 func main() {
-	// Create an instance of the app structure
-	app := container.NewApp()
+	// Create an instance of the appEngine structure
+	appEngine := engine.NewAppEngine()
 
-	uapi := ipc.NewUaacApi(app)
-	sapi := ipc.NewStockApi(app)
-	papi := ipc.NewSystemApi(app)
+	// uapi := ipc.NewUaacApi(app)
+	// sapi := ipc.NewStockApi(app)
+	// papi := ipc.NewSystemApi(app)
 
 	// menu
 	isMacOS := runtime.GOOS == "darwin"
@@ -40,9 +39,10 @@ func main() {
 		appMenu.Append(menu.WindowMenu())
 	}
 
+	appInfo := appEngine.AppInfo()
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:            app.Info.AppName,
+		Title:            appInfo.AppName,
 		Width:            1024,
 		Height:           768,
 		MinWidth:         960,
@@ -52,21 +52,19 @@ func main() {
 		WindowStartState: options.Maximised,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,
-			Handler: app,
+			Handler: appEngine,
 		},
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 1},
 		StartHidden:      true,
-		OnStartup:        app.Startup,
-		OnDomReady:       app.DomReady,
-		OnShutdown:       app.Shutdown,
-		Bind: []interface{}{
-			uapi, papi, sapi,
-		},
+		OnStartup:        appEngine.Startup,
+		OnDomReady:       appEngine.DomReady,
+		OnShutdown:       appEngine.Shutdown,
+		Bind:             appEngine.BindAPI(),
 		Mac: &mac.Options{
 			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{
-				Title:   fmt.Sprintf("%s %s", app.Info.AppName, app.Info.Version),
-				Message: app.Info.Comments + "\n\n" + app.Info.Copyright,
+				Title:   fmt.Sprintf("%s %s", appInfo.AppName, appInfo.Version),
+				Message: appInfo.Comments + "\n\n" + appInfo.Copyright,
 				Icon:    icon,
 			},
 			WebviewIsTransparent: false,
@@ -78,7 +76,7 @@ func main() {
 			DisableFramelessWindowDecorations: false,
 		},
 		Linux: &linux.Options{
-			ProgramName:         app.Info.AppName,
+			ProgramName:         appInfo.AppName,
 			Icon:                icon,
 			WebviewGpuPolicy:    linux.WebviewGpuPolicyOnDemand,
 			WindowIsTranslucent: true,
