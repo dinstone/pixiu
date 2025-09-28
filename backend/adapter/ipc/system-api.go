@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"pixiu/backend/business/system"
+	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/runtime/container"
 )
 
@@ -15,6 +16,16 @@ func NewSystemApi(app *container.App) *SystemApi {
 
 func (sa *SystemApi) GetAppInfo() *Result {
 	return Success(sa.app.Info)
+}
+
+func (sa *SystemApi) CheckForUpdate() *Result {
+	ps := getSystemService(sa.app)
+	u, err := ps.GetLatestUpdate(sa.app.Info.Version)
+	if err != nil {
+		slf4g.R().Warn("check update failed, %s", err)
+		return Failure(err)
+	}
+	return Success(u)
 }
 
 func (p *SystemApi) GetPreferences() *Result {

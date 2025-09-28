@@ -46,7 +46,7 @@ func NewApp() *App {
 	info := system.AppInfo{
 		AppName:   constant.AppName,
 		AppCode:   constant.AppCode,
-		Version:   "1.1.0",
+		Version:   "v1.2.0",
 		Comments:  "A modern lightweight cross-platform desktop system.",
 		Copyright: "Copyright © 2025 dinstone all rights reserved",
 	}

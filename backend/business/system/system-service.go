@@ -1,11 +1,14 @@
 package system
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"pixiu/backend/pkg/slf4g"
 	"reflect"
 	"strings"
 	"sync"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -18,6 +21,50 @@ type SystemService struct {
 func NewSystemService(pr PreferenceRepository) *SystemService {
 	return &SystemService{
 		storage: pr,
+	}
+}
+
+func (p *SystemService) GetLatestUpdate(currentVersion string) (*UpdateInfo, error) {
+	url := "https://api.github.com/repos/dinstone/pixiu/releases/latest"
+
+	// 创建HTTP客户端并设置超时时间
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	// 发起GET请求
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch update info: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 检查响应状态码
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch update info, status code: %d", resp.StatusCode)
+	}
+
+	// 解析响应体中的JSON数据
+	var release struct {
+		TagName string `json:"tag_name"`
+		HTMLURL string `json:"html_url"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if currentVersion < release.TagName {
+		// 构造返回结果
+		updateInfo := UpdateInfo{
+			HtmlUrl: release.HTMLURL,
+			Latest:  release.TagName,
+			Current: currentVersion,
+		}
+
+		return &updateInfo, nil
+	} else {
+		return nil, fmt.Errorf("no update available")
 	}
 }
 

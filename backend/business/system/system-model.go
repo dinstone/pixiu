@@ -18,3 +18,9 @@ type AppInfo struct {
 	Comments  string `json:"comments" yaml:"comments"`
 	Copyright string `json:"copyright" yaml:"copyright"`
 }
+
+type UpdateInfo struct {
+	Latest  string `json:"latest" yaml:"latest"`
+	Current string `json:"current" yaml:"current"`
+	HtmlUrl string `json:"htmlUrl" yaml:"htmlUrl"`
+}
