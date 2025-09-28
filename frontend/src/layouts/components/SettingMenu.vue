@@ -41,7 +41,7 @@ function handleMenuSelect(key, item) {
     aboutDialogRef.value.show()
     return
   }
-  if (key === 'apiDoc') {
+  if (key === 'issue') {
     BrowserOpenURL(item.path)
     return
   }
@@ -63,10 +63,10 @@ const staticMenus = [
     icon: () => h('i', { class: 'i-fe:layout text-14' }),
   },
   {
-    label: '接口文档',
-    key: 'apiDoc',
+    label: '问题反馈',
+    key: 'issue',
     icon: () => h('i', { class: 'i-fe:book text-14' }),
-    path: 'https://apifox.com/apidoc/shared-ff4a4d32-c0d1-4caf-b0ee-6abc130f734a',
+    path: 'https://github.com/dinstone/pixiu/issues',
   },
   {
     label: '检查更新',
