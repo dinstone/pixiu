@@ -2,7 +2,6 @@ package ipc
 
 import (
 	"pixiu/backend/adapter/container"
-	"pixiu/backend/adapter/storage"
 	"pixiu/backend/business/uaac"
 	"pixiu/backend/pkg/exception"
 	"pixiu/backend/pkg/utils"
@@ -110,8 +109,7 @@ func (u *UaacApi) UpdateAvator(token string) *Result {
 	if imgFile != "" {
 		// save file
 		userId := claims.Username
-		as := u.ac.GetComponent("AvatorStorage").(*storage.AvatorStorage)
-		aurl, err := as.SaveAvatorFile(imgFile, userId)
+		aurl, err := u.ac.AvatorHandler().SaveAvatorFile(imgFile, userId)
 		if err != nil {
 			return Failure(err)
 		}

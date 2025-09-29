@@ -2,9 +2,9 @@ package engine
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"path/filepath"
+	"pixiu/backend/adapter/assert"
 	"pixiu/backend/adapter/dao"
 	"pixiu/backend/adapter/ipc"
 	"pixiu/backend/adapter/storage"
@@ -16,7 +16,6 @@ import (
 	"pixiu/backend/pkg/slf4g"
 	"pixiu/backend/pkg/utils"
 	"pixiu/backend/runtime/zaplog"
-	"strings"
 
 	"github.com/vrischmann/userdir"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -33,6 +32,8 @@ type AppEngine struct {
 	acd string // app config directory
 
 	gdb *gorm.DB
+
+	aah *assert.AvatorHandler
 
 	lcs []ipc.LifeCycle
 
@@ -51,7 +52,11 @@ func NewAppEngine() *AppEngine {
 		Copyright: "Copyright © 2025 dinstone all rights reserved",
 	}
 
-	ae := &AppEngine{ncmap: make(map[string]interface{}), appInfo: info}
+	ae := &AppEngine{
+		aah:     &assert.AvatorHandler{},
+		ncmap:   make(map[string]interface{}),
+		appInfo: info,
+	}
 
 	uapi := ipc.NewUaacApi(ae)
 	sapi := ipc.NewStockApi(ae)
@@ -75,6 +80,10 @@ func (a *AppEngine) WailsContext() context.Context {
 
 func (a *AppEngine) ConfigHome() string {
 	return a.acd
+}
+
+func (a *AppEngine) AvatorHandler() *assert.AvatorHandler {
+	return a.aah
 }
 
 func (a *AppEngine) BindAPI() []interface{} {
@@ -141,16 +150,17 @@ func (a *AppEngine) Startup(ctx context.Context) {
 	}
 
 	gormer := gormer.NewGormer(gdb)
-	uacs := uaac.NewUaacService(gormer, dao.NewUaacDao(gormer))
-	ss := stock.NewStockService(gormer, dao.NewStockDao(gormer))
-	a.ncmap["UaacService"] = uacs
-	a.ncmap["StockService"] = ss
+	a.ncmap["UaacService"] = uaac.NewUaacService(gormer, dao.NewUaacDao(gormer))
+	a.ncmap["StockService"] = stock.NewStockService(gormer, dao.NewStockDao(gormer))
 
 	pls := storage.NewLocalStorage(a.acd, "preferences.yaml")
-	pss := system.NewSystemService(pls)
-	a.ncmap["SystemService"] = pss
+	a.ncmap["SystemService"] = system.NewSystemService(pls)
 
-	a.ncmap["AvatorStorage"] = storage.NewAvatorStorage(a.acd)
+	err = a.aah.Startup(a.acd)
+	if err != nil {
+		slf4g.R().Warn("启动assert服务失败 %v", err)
+		panic(err)
+	}
 
 	for _, v := range a.lcs {
 		v.Start()
@@ -234,32 +244,4 @@ func loadSqliteConfig(acd string) *dao.SqliteConfig {
 		Type:         "sqlite3",
 	}
 
-}
-
-func (a *AppEngine) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	path := req.URL.Path
-
-	// 拦截 /avatar/{userId}.{timestamp} 请求
-	if len(path) > len("/avatar/") && path[:len("/avatar/")] == "/avatar/" {
-		avatorFile := path[len("/avatar/"):]
-		dotIndex := strings.Index(avatorFile, ".")
-		if dotIndex != -1 {
-			avatorFile = avatorFile[:dotIndex]
-		}
-
-		storage := a.GetComponent("AvatorStorage").(*storage.AvatorStorage)
-		fileData, err := storage.LoadAvatorFile(avatorFile)
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// 设置响应头（图片类型）
-		res.Header().Set("Content-Type", "image/webp")
-		res.Write(fileData)
-		return
-	}
-
-	// 3. 其他路径返回 404
-	http.NotFound(res, req)
 }

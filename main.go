@@ -26,10 +26,6 @@ func main() {
 	// Create an instance of the appEngine structure
 	appEngine := engine.NewAppEngine()
 
-	// uapi := ipc.NewUaacApi(app)
-	// sapi := ipc.NewStockApi(app)
-	// papi := ipc.NewSystemApi(app)
-
 	// menu
 	isMacOS := runtime.GOOS == "darwin"
 	appMenu := menu.NewMenu()
@@ -52,7 +48,7 @@ func main() {
 		WindowStartState: options.Maximised,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,
-			Handler: appEngine,
+			Handler: appEngine.AvatorHandler(),
 		},
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 1},
 		StartHidden:      true,
