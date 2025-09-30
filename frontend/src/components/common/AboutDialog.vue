@@ -22,8 +22,8 @@
           源码工程
         </n-text>
         <n-divider vertical />
-        <n-text class="cursor-pointer" @click="onOpenWebsite">
-          官方网站
+        <n-text class="cursor-pointer" @click="onOpenConfig">
+          查看配置
         </n-text>
       </n-space>
       <div class="about-copyright">
@@ -37,6 +37,7 @@
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { useAppStore } from '@/store'
+import { OpenConfigFolder } from 'wailsjs/go/ipc/SystemApi'
 import { BrowserOpenURL } from 'wailsjs/runtime/runtime.js'
 
 // const title = import.meta.env.VITE_TITLE
@@ -47,8 +48,8 @@ function onOpenSource() {
   BrowserOpenURL('https://github.com/dinstone/pixiu')
 }
 
-function onOpenWebsite() {
-  BrowserOpenURL('https://github.com/zclzone/vue-naive-admin')
+function onOpenConfig() {
+  OpenConfigFolder()
 }
 
 const [modalRef] = useModal()

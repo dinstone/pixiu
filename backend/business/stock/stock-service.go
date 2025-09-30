@@ -158,7 +158,7 @@ func (ss StockService) UpdateTransaction(tran *Transaction) error {
 	otran.Price = tran.Price
 	otran.Quantity = tran.Quantity
 	otran.TaxFee = tran.TaxFee
-	otran.Amount = floatMul(tran.Price, tran.Quantity)
+	otran.Amount = floatMulInt(tran.Price, tran.Quantity)
 	otran.FinishTime = tran.FinishTime
 	otran.UpdatedAt = time.Now()
 	err = ss.sr.UpdateTransaction(ss.gtm.Context(), otran)
@@ -169,11 +169,16 @@ func (ss StockService) UpdateTransaction(tran *Transaction) error {
 	return ss.computeHolding(otran.InvestID)
 }
 
-func floatMul(p float64, q int) float64 {
+func floatMulInt(p float64, q int) float64 {
 	pd := decimal.NewFromFloat(p)
 	qd := decimal.NewFromInt(int64(q))
 	// 转换为 float64 存储到结构体字段
-	return pd.Mul(qd).RoundBank(3).InexactFloat64()
+	return pd.Mul(qd).RoundBank(2).InexactFloat64()
+}
+
+func round2Decimal(value float64) float64 {
+	d := decimal.NewFromFloat(value)
+	return d.RoundBank(2).InexactFloat64()
 }
 
 func (ss StockService) AddTransaction(tran *Transaction) error {
@@ -208,7 +213,10 @@ func (ss StockService) AddTransaction(tran *Transaction) error {
 	tran.InvestID = invest.ID
 	tran.CreatedAt = nowTime
 	tran.UpdatedAt = nowTime
-	tran.Amount = floatMul(tran.Price, tran.Quantity)
+	tran.Amount = floatMulInt(tran.Price, tran.Quantity)
+	if tran.TaxFee == 0 {
+		tran.TaxFee = round2Decimal(tran.Amount * 0.00136)
+	}
 
 	err = ss.sr.CreateTransaction(ss.gtm.Context(), tran)
 	if err != nil {
@@ -238,10 +246,11 @@ func (ss StockService) computeHolding(investId int64) error {
 	totalTaxFee := decimal.NewFromFloat(0)
 
 	for _, t := range *trans {
-		if t.Action == 1 {
+		switch t.Action {
+		case 1:
 			inQuantity += t.Quantity
 			inAmount = inAmount.Add(decimal.NewFromFloat(t.Price).Mul(decimal.NewFromInt(int64(t.Quantity))))
-		} else if t.Action == -1 {
+		case -1:
 			ouQuantity += t.Quantity
 			ouAmount = ouAmount.Add(decimal.NewFromFloat(t.Price).Mul(decimal.NewFromInt(int64(t.Quantity))))
 		}
@@ -252,7 +261,7 @@ func (ss StockService) computeHolding(investId int64) error {
 	invest.CostPrice = inAmount.Div(decimal.NewFromInt(int64(inQuantity))).RoundBank(3).InexactFloat64()
 
 	invest.Quantity = inQuantity - ouQuantity
-	invest.Amount = floatMul(invest.CostPrice, invest.Quantity)
+	invest.Amount = floatMulInt(invest.CostPrice, invest.Quantity)
 	invest.ProfitLoss = ouAmount.Sub(inAmount).Add(decimal.NewFromFloat(invest.Amount)).InexactFloat64()
 
 	// 第一个元素

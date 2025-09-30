@@ -1,9 +1,11 @@
 package ipc
 
 import (
+	"os/exec"
 	"pixiu/backend/adapter/container"
 	"pixiu/backend/business/system"
 	"pixiu/backend/pkg/slf4g"
+	"runtime"
 )
 
 type SystemApi struct {
@@ -54,4 +56,26 @@ func (sa *SystemApi) UpdatePreferences(values map[string]any) (ret Result) {
 		ret.Mesg = err.Error()
 	}
 	return
+}
+
+// 打开文件管理器并选中指定路径的文件夹
+func (sa *SystemApi) OpenConfigFolder() error {
+	var cmd *exec.Cmd
+	path := sa.ac.ConfigHome()
+	switch runtime.GOOS {
+	case "windows":
+		// Windows: explorer /select,"C:\path\to\folder"
+		cmd = exec.Command("explorer", "/select,\""+path+"\"")
+	case "darwin":
+		// macOS: open -R /path/to/folder
+		cmd = exec.Command("open", "-R", path)
+	case "linux":
+		// Linux: xdg-open /path/to/folder
+		// 注意：xdg-open 只是打开文件夹，无法自动选中
+		cmd = exec.Command("xdg-open", path)
+	default:
+		return nil
+	}
+
+	return cmd.Start() // 使用 Start() 而不是 Run()，避免阻塞
 }
