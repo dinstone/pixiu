@@ -44,11 +44,18 @@ func (ss *StockService) GetStockClear(stockCode string, startTime string, finish
 		profitLoss += ci.ProfitLoss
 		openTime, _ := time.Parse(DateTimeLayout, ci.OpenTime)
 		closeTime, _ := time.Parse(DateTimeLayout, ci.CloseTime)
-		ci.HoldingDays = int(closeTime.Sub(openTime).Hours() / 24)
+		ci.HoldingDays = daysBetweenDates(openTime, closeTime)
 		invests = append(invests, ci)
 	}
 
 	return &ClearInvest{Stock: sinfo, Stats: &ClearStats{TotalCount: totalCount, ProfitLoss: profitLoss, StartTime: startTime, FinishTime: finishTime}, Invests: &invests}, nil
+}
+
+// daysBetweenDates 计算两个时间点之间相差的天数（只看日期，忽略时分秒）
+func daysBetweenDates(t1, t2 time.Time) int {
+	t1 = time.Date(t1.Year(), t1.Month(), t1.Day(), 0, 0, 0, 0, t1.Location())
+	t2 = time.Date(t2.Year(), t2.Month(), t2.Day(), 0, 0, 0, 0, t2.Location())
+	return int(t2.Sub(t1).Hours() / 24)
 }
 
 func (ss StockService) GetStockList() (*[]StockInfo, error) {
@@ -215,7 +222,7 @@ func (ss StockService) AddTransaction(tran *Transaction) error {
 	tran.UpdatedAt = nowTime
 	tran.Amount = floatMulInt(tran.Price, tran.Quantity)
 	if tran.TaxFee == 0 {
-		tran.TaxFee = round2Decimal(tran.Amount * 0.00136)
+		tran.TaxFee = round2Decimal(tran.Amount * 0.00137)
 	}
 
 	err = ss.sr.CreateTransaction(ss.gtm.Context(), tran)

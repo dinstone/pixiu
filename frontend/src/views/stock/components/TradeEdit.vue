@@ -22,7 +22,7 @@
           <template #label>
             价格
           </template>
-          <n-input-number v-model:value="formModel.price" class="n-input n-input--resizable n-input--stateful" />
+          <n-input-number v-model:value="formModel.price" :precision="3" class="n-input n-input--resizable n-input--stateful" />
         </n-form-item-gi>
         <n-form-item-gi :span="12" path="taxFee">
           <template #label>

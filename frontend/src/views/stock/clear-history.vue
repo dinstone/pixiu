@@ -54,15 +54,15 @@ import { onMounted } from 'vue'
 import api from './api.js'
 
 const investColumns = [
-  { title: '建仓时间', key: 'openTime' },
-  { title: '清仓时间', key: 'closeTime' },
+  { title: '投资时间', render: row => `${row.openTime?.substring(0, 10)} - ${row.closeTime?.substring(0, 10)}` },
   { title: '持股天数', key: 'holdingDays' },
+  { title: '税费合计', key: 'totalTaxFee', render: row => row.totalTaxFee.toFixed(2) },
   { title: '清仓盈亏', key: 'profitLoss', render(row) {
     if (row.profitLoss > 0) {
-      return h('span', { style: 'color: red' }, row.profitLoss)
+      return h('span', { style: 'color: red' }, row.profitLoss.toFixed(2))
     }
     else {
-      return h('span', { style: 'color: blue' }, row.profitLoss)
+      return h('span', { style: 'color: blue' }, row.profitLoss.toFixed(2))
     }
   } },
 ]
