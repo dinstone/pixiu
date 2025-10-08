@@ -153,7 +153,7 @@ func (a *AppEngine) Startup(ctx context.Context) {
 	a.ncmap["UaacService"] = uaac.NewUaacService(gormer, dao.NewUaacDao(gormer))
 	a.ncmap["StockService"] = stock.NewStockService(gormer, dao.NewStockDao(gormer))
 
-	pls := storage.NewLocalStorage(a.acd, "preferences.yaml")
+	pls := storage.NewLocalStorage(a.acd, "preferences.json")
 	a.ncmap["SystemService"] = system.NewSystemService(pls)
 
 	err = a.aah.Startup(a.acd)

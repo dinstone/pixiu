@@ -9,8 +9,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"gopkg.in/yaml.v3"
 )
 
 type SystemService struct {
@@ -74,7 +72,7 @@ func (p *SystemService) getPreferences() (ret Preferences) {
 		return
 	}
 
-	yaml.Unmarshal(b, &ret)
+	json.Unmarshal(b, &ret)
 	return
 }
 
@@ -113,7 +111,7 @@ func (p *SystemService) setPreferences(pf *Preferences, key string, value any) e
 }
 
 func (p *SystemService) savePreferences(pf *Preferences) error {
-	b, err := yaml.Marshal(pf)
+	b, err := json.Marshal(pf)
 	if err != nil {
 		return err
 	}
