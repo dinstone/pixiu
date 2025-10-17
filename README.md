@@ -5,7 +5,8 @@
 <h1 align="center">Pixiu SIM</h1>
 
 <div align="center">
-[![GitHub release](https://img.shields.io/github/v/release/dinstone/pixiu.svg)](https://github.com/dinstone/pixiu/releases)
+
+[![GitHub release](https://img.shields.io/github/release/dinstone/pixiu)](https://github.com/dinstone/pixiu/releases)
 
 <strong>Pixiu is a modern lightweight cross-platform Stock Investment Management Desktop System.
 
