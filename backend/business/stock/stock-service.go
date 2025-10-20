@@ -38,17 +38,25 @@ func (ss *StockService) GetStockClear(stockCode string, startTime string, finish
 
 	var totalCount int
 	var profitLoss float64
+	var totalAmount float64
 	var invests []Investment
 	for _, ci := range *cinvests {
 		totalCount++
 		profitLoss += ci.ProfitLoss
+		totalAmount += ci.Amount
 		openTime, _ := time.Parse(DateTimeLayout, ci.OpenTime)
 		closeTime, _ := time.Parse(DateTimeLayout, ci.CloseTime)
 		ci.HoldingDays = daysBetweenDates(openTime, closeTime)
 		invests = append(invests, ci)
 	}
-
-	return &ClearInvest{Stock: sinfo, Stats: &ClearStats{TotalCount: totalCount, ProfitLoss: profitLoss, StartTime: startTime, FinishTime: finishTime}, Invests: &invests}, nil
+	roi := 0.00
+	if totalAmount != 0 {
+		roi = round2Decimal((profitLoss / totalAmount) * 100)
+	}
+	return &ClearInvest{
+		Stock:   sinfo,
+		Stats:   &ClearStats{TotalCount: totalCount, ProfitLoss: profitLoss, Roi: roi, StartTime: startTime, FinishTime: finishTime},
+		Invests: &invests}, nil
 }
 
 // daysBetweenDates 计算两个时间点之间相差的天数（只看日期，忽略时分秒）
@@ -268,7 +276,7 @@ func (ss StockService) computeHolding(investId int64) error {
 	invest.CostPrice = inAmount.Div(decimal.NewFromInt(int64(inQuantity))).RoundBank(3).InexactFloat64()
 
 	invest.Quantity = inQuantity - ouQuantity
-	invest.Amount = floatMulInt(invest.CostPrice, invest.Quantity)
+	invest.Amount = inAmount.RoundBank(2).InexactFloat64()
 	invest.ProfitLoss = ouAmount.Sub(inAmount).Add(decimal.NewFromFloat(invest.Amount)).InexactFloat64()
 
 	// 第一个元素

@@ -2,10 +2,10 @@
   <CommonPage>
     <n-flex vertical>
       <n-descriptions label-placement="left" bordered :column="3">
-        <n-descriptions-item label="股票" :span="2">
+        <n-descriptions-item label="股票">
           {{ stockClear.market }}  {{ stockClear.name }} ({{ stockClear.code }})
         </n-descriptions-item>
-        <n-descriptions-item label="币种" :span="1">
+        <n-descriptions-item label="币种">
           {{ stockClear.currency }}
         </n-descriptions-item>
         <n-descriptions-item label="统计范围">
@@ -17,6 +17,11 @@
         <n-descriptions-item label="盈亏金额">
           <span :style="{ color: stockClear.profitLoss > 0 ? 'red' : 'blue' }">
             {{ stockClear.profitLoss }}
+          </span>
+        </n-descriptions-item>
+        <n-descriptions-item label="总收益率">
+          <span :style="{ color: stockClear.profitLoss > 0 ? 'red' : 'blue' }">
+            {{ stockClear.roi }}%
           </span>
         </n-descriptions-item>
       </n-descriptions>
@@ -63,6 +68,14 @@ const investColumns = [
     }
     else {
       return h('span', { style: 'color: blue' }, row.profitLoss.toFixed(2))
+    }
+  } },
+  { title: '收益率', key: 'roi', render(row) {
+    if (row.amount === 0) {
+      return '0%'
+    }
+    else {
+      return `${((row.profitLoss / row.amount) * 100).toFixed(2)}%`
     }
   } },
 ]

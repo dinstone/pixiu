@@ -23,7 +23,7 @@ type Investment struct {
 	TotalTaxFee float64   `json:"totalTaxFee"`          // 税费合计
 	CostPrice   float64   `json:"costPrice"`            // 成本价格
 	Quantity    int       `json:"quantity"`             // 持仓数量
-	Amount      float64   `json:"amount"`               // 持仓金额
+	Amount      float64   `json:"amount"`               // 投资金额
 	Status      int       `json:"status"`               // 状态（-1:删除、0:持仓、1:清仓）
 	HoldingDays int       `gorm:"-" json:"holdingDays"` // 持仓天数
 	OpenTime    string    `json:"openTime"`             // 建仓时间
@@ -51,6 +51,7 @@ type ClearStats struct {
 	StockCode   string  `json:"stockCode"`
 	StockName   string  `json:"stockName"`
 	ProfitLoss  float64 `json:"profitLoss"`
+	Roi         float64 `json:"roi"`
 	TotalCount  int     `json:"totalCount"`
 	ProfitCount int     `json:"profitCount"`
 	LossCount   int     `json:"lossCount"`

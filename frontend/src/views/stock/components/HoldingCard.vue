@@ -17,11 +17,14 @@
         </div>
       </div>
       <n-descriptions label-placement="left" bordered :column="3">
-        <n-descriptions-item label="股票" :span="2">
+        <n-descriptions-item label="股票">
           {{ currentStock.market }}  {{ currentStock.name }} ({{ currentStock.code }})
         </n-descriptions-item>
-        <n-descriptions-item label="币种" :span="1">
+        <n-descriptions-item label="币种">
           {{ currentStock.currency }}
+        </n-descriptions-item>
+        <n-descriptions-item label="投资金额">
+          {{ holding.amount }}
         </n-descriptions-item>
         <n-descriptions-item label="持仓盈亏">
           <span :style="{ color: holding.profitLoss > 0 ? 'red' : 'blue' }">
@@ -34,14 +37,14 @@
         <n-descriptions-item label="持股天数">
           {{ holding.holdingDays }}
         </n-descriptions-item>
-        <n-descriptions-item label="持仓金额">
-          {{ holding.amount }}
-        </n-descriptions-item>
         <n-descriptions-item label="买入成本">
           {{ holding.costPrice }}
         </n-descriptions-item>
         <n-descriptions-item label="持仓数量">
           {{ holding.quantity }}
+        </n-descriptions-item>
+        <n-descriptions-item label="持仓金额">
+          {{ (holding.quantity * holding.costPrice).toFixed(3) }}
         </n-descriptions-item>
       </n-descriptions>
 
