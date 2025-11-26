@@ -107,7 +107,7 @@ func (a *AppEngine) Startup(ctx context.Context) {
 		if err != nil {
 			panic(err)
 		}
-		a.acd = filepath.Join(wd, constant.AppCode)
+		a.acd = filepath.Join(wd, "work")
 	} else {
 		a.acd = filepath.Join(userdir.GetConfigHome(), constant.AppCode)
 	}

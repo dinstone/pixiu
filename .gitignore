@@ -4,3 +4,4 @@ frontend/dist
 frontend/wailsjs/go/*
 PixiuSIM/*
 .vscode/*
+work/*
